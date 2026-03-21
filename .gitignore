@@ -1,0 +1,9 @@
+# env
+.env*
+# etc
+etc/
+sample/
+dev_docs/
+# claude
+.claude/
+node_modules
