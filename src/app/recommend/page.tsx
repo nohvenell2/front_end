@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSettings } from "@/context/settings-context";
 import { fetchSteamLibrary, fetchUserRecommendation } from "@/lib/api-client";
@@ -18,6 +18,14 @@ import { useState } from "react";
 import Link from "next/link";
 
 export default function RecommendPage() {
+  return (
+    <Suspense>
+      <RecommendPageInner />
+    </Suspense>
+  );
+}
+
+function RecommendPageInner() {
   const { status } = useSession();
   const router = useRouter();
   const { settings } = useSettings();
