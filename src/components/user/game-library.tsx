@@ -8,9 +8,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface GameLibraryProps {
   games: SteamGameEnriched[];
+  selectable?: boolean;
+  selectedIds?: Set<number>;
+  onToggleSelect?: (appid: number) => void;
 }
 
-export function GameLibrary({ games }: GameLibraryProps) {
+export function GameLibrary({ games, selectable, selectedIds, onToggleSelect }: GameLibraryProps) {
   const [view, setView] = useState<"grid" | "list">("grid");
 
   const sorted = [...games].sort(
@@ -21,7 +24,7 @@ export function GameLibrary({ games }: GameLibraryProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          {games.length} games
+          {games.length} games{selectable && selectedIds && selectedIds.size > 0 && ` (${selectedIds.size} selected)`}
         </p>
         <ViewToggle view={view} onChange={setView} />
       </div>
@@ -29,13 +32,29 @@ export function GameLibrary({ games }: GameLibraryProps) {
       {view === "grid" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {sorted.map((game, i) => (
-            <GameCard key={game.appid} game={game} view="grid" priority={i < 4} />
+            <GameCard
+              key={game.appid}
+              game={game}
+              view="grid"
+              priority={i < 4}
+              selectable={selectable}
+              selected={selectedIds?.has(game.appid)}
+              onToggleSelect={() => onToggleSelect?.(game.appid)}
+            />
           ))}
         </div>
       ) : (
         <div className="space-y-2">
           {sorted.map((game, i) => (
-            <GameCard key={game.appid} game={game} view="list" priority={i === 0} />
+            <GameCard
+              key={game.appid}
+              game={game}
+              view="list"
+              priority={i === 0}
+              selectable={selectable}
+              selected={selectedIds?.has(game.appid)}
+              onToggleSelect={() => onToggleSelect?.(game.appid)}
+            />
           ))}
         </div>
       )}

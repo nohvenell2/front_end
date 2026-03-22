@@ -1,4 +1,3 @@
-import { Progress } from "@/components/ui/progress";
 import type { RankedGame } from "@/types/recommend";
 
 interface ScoreProgressBarsProps {
@@ -12,6 +11,12 @@ const SCORE_LABELS = [
   { key: "recency" as const, label: "Recency" },
 ];
 
+function barColor(pct: number): string {
+  if (pct >= 80) return "bg-green-500 dark:bg-green-400";
+  if (pct >= 60) return "bg-yellow-400 dark:bg-yellow-300";
+  return "bg-red-400 dark:bg-red-400";
+}
+
 export function ScoreProgressBars({ scores }: ScoreProgressBarsProps) {
   return (
     <div className="space-y-2">
@@ -23,7 +28,12 @@ export function ScoreProgressBars({ scores }: ScoreProgressBarsProps) {
               <span>{label}</span>
               <span>{pct}%</span>
             </div>
-            <Progress value={pct} className="h-1.5" />
+            <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className={`h-full transition-all ${barColor(pct)}`}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
           </div>
         );
       })}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSettings } from "@/context/settings-context";
@@ -21,7 +21,16 @@ export default function RecommendPage() {
   const { status } = useSession();
   const router = useRouter();
   const { settings } = useSettings();
+  const searchParams = useSearchParams();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [chartMode, setChartMode] = useState<"radar" | "bars">("radar");
+
+  const selectedParam = searchParams.get("selected");
+  const selectedIds = useMemo(() => {
+    if (!selectedParam) return null;
+    const ids = new Set(selectedParam.split(",").map(Number).filter((n) => !isNaN(n)));
+    return ids.size > 0 ? ids : null;
+  }, [selectedParam]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -36,16 +45,24 @@ export default function RecommendPage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const gamesToSend = useMemo(() => {
+    if (!games) return [];
+    if (selectedIds) {
+      return games.filter((g) => selectedIds.has(g.appid));
+    }
+    return games;
+  }, [games, selectedIds]);
+
   const {
     data: recommendResponse,
     isLoading,
     error,
     refetch,
   } = useQuery<RecommendResponse>({
-    queryKey: ["recommendations", settings],
+    queryKey: ["recommendations", settings, selectedParam],
     queryFn: () =>
       fetchUserRecommendation({
-        games: (games ?? []).map((g) => ({
+        games: gamesToSend.map((g) => ({
           appid: g.appid,
           name: g.name,
           playtime_forever: g.playtime_forever,
@@ -57,7 +74,7 @@ export default function RecommendPage() {
         total_review_count: settings.filters.minReviewCount,
         total_review_positive_percent: settings.filters.minPositivePercent,
       }),
-    enabled: status === "authenticated" && !!games && games.length > 0,
+    enabled: status === "authenticated" && gamesToSend.length > 0,
     staleTime: 0,
   });
 
@@ -141,6 +158,11 @@ export default function RecommendPage() {
 
         {!isLoading && rankedGames.length > 0 && (
           <>
+            {selectedIds && (
+              <p className="text-sm text-muted-foreground mb-4">
+                Based on {selectedIds.size} selected game{selectedIds.size > 1 ? "s" : ""} from your library.
+              </p>
+            )}
             <p className="text-sm text-muted-foreground mb-6">
               Showing {rankedGames.length} recommendations
               {recommendResponse?.skipped_game_ids &&
@@ -154,7 +176,7 @@ export default function RecommendPage() {
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {rankedGames.map((game, i) => (
-                <RecommendCard key={game.game_id} game={game} rank={i + 1} />
+                <RecommendCard key={game.game_id} game={game} rank={i + 1} chartMode={chartMode} onChartModeChange={setChartMode} />
               ))}
             </div>
           </>

@@ -3,13 +3,16 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import type { SteamGameEnriched } from "@/types/steam";
-import { formatPlaytime, steamHeaderUrl } from "@/lib/utils";
+import { formatPlaytime, steamHeaderUrl, cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
 interface GameCardProps {
   game: SteamGameEnriched;
   view: "grid" | "list";
   priority?: boolean;
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: () => void;
 }
 
 function GameImage({
@@ -54,10 +57,17 @@ function GameImage({
   );
 }
 
-export function GameCard({ game, view, priority }: GameCardProps) {
+export function GameCard({ game, view, priority, selectable, selected, onToggleSelect }: GameCardProps) {
   if (view === "list") {
     return (
-      <div className="flex items-center gap-4 rounded-lg border p-3 hover:bg-muted/50 transition-colors">
+      <div
+        className={cn(
+          "flex items-center gap-4 rounded-lg border p-3 hover:bg-muted/50 transition-colors",
+          selectable && "cursor-pointer",
+          selected && "ring-2 ring-primary"
+        )}
+        onClick={selectable ? onToggleSelect : undefined}
+      >
         <div className="relative w-24 h-11.25 shrink-0 overflow-hidden rounded">
           <GameImage
             appid={game.appid}
@@ -89,7 +99,14 @@ export function GameCard({ game, view, priority }: GameCardProps) {
   }
 
   return (
-    <div className="rounded-lg border overflow-hidden hover:shadow-md transition-shadow">
+    <div
+      className={cn(
+        "rounded-lg border overflow-hidden hover:shadow-md transition-shadow",
+        selectable && "cursor-pointer",
+        selected && "ring-2 ring-primary"
+      )}
+      onClick={selectable ? onToggleSelect : undefined}
+    >
       <div className="relative w-full aspect-460/215 overflow-hidden">
         <GameImage
           appid={game.appid}

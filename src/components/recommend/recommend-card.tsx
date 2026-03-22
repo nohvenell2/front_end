@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import type { RankedGame } from "@/types/recommend";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +9,8 @@ import { ScoreProgressBars } from "./score-progress-bars";
 interface RecommendCardProps {
   game: RankedGame;
   rank: number;
+  chartMode: "radar" | "bars";
+  onChartModeChange: (mode: "radar" | "bars") => void;
 }
 
 function reviewColor(text: string): string {
@@ -21,12 +22,10 @@ function reviewColor(text: string): string {
   return "text-muted-foreground";
 }
 
-export function RecommendCard({ game, rank }: RecommendCardProps) {
-  const [showMore, setShowMore] = useState(false);
-  const [chartMode, setChartMode] = useState<"radar" | "bars">("radar");
+export function RecommendCard({ game, rank, chartMode, onChartModeChange }: RecommendCardProps) {
 
   return (
-    <div className="rounded-lg border overflow-hidden hover:shadow-md transition-shadow">
+    <div className="rounded-lg border overflow-hidden hover:shadow-md transition-shadow flex flex-col">
       {/* Header image */}
       <div className="relative w-full aspect-460/215">
         <Image
@@ -42,49 +41,57 @@ export function RecommendCard({ game, rank }: RecommendCardProps) {
         </div>
       </div>
 
-      <div className="p-4 space-y-3">
-        {/* Title + review */}
-        <div className="space-y-1">
-          <h3 className="font-semibold leading-tight">{game.title}</h3>
-          <p className="text-xs text-muted-foreground">
-            {game.developer} · {game.release_date_original}
-          </p>
-          <p className={`text-xs font-medium ${reviewColor(game.all_reviews)}`}>
-            {game.all_reviews} ({game.total_review_positive_percent}%,{" "}
-            {game.total_review_count.toLocaleString()} reviews)
-          </p>
+      <div className="p-4 flex flex-col flex-1 gap-3">
+        {/* Title + review + score */}
+        <div className="flex items-stretch gap-3">
+          <div className="flex-1 space-y-1 min-w-0">
+            <h3 className="font-semibold leading-tight">{game.title}</h3>
+            <p className="text-xs text-muted-foreground">
+              {game.developer} · {game.release_date_original}
+            </p>
+            <p className={`text-xs font-medium ${reviewColor(game.all_reviews)}`}>
+              {game.all_reviews} ({game.total_review_positive_percent}%,{" "}
+              {game.total_review_count.toLocaleString()} reviews)
+            </p>
+          </div>
+          <div className="flex flex-col items-center justify-center shrink-0 w-14 rounded-lg bg-muted">
+            <span className="text-2xl font-bold leading-none">
+              {Math.round(game.finalScore * 100)}
+            </span>
+          </div>
         </div>
 
-        {/* Genres */}
-        {game.genres.length > 0 && (
-          <div className="flex gap-1 flex-wrap">
-            {game.genres.map((g) => (
-              <Badge key={g} variant="secondary" className="text-xs">
-                {g}
-              </Badge>
-            ))}
+        {/* Genres & Tags */}
+        {(game.genres.length > 0 || game.tags.length > 0) && (
+          <div className="space-y-1">
+            {game.genres.length > 0 && (
+              <div className="flex gap-1 flex-wrap">
+                {game.genres.slice(0, 5).map((g) => (
+                  <Badge key={`genre-${g}`} className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">
+                    {g}
+                  </Badge>
+                ))}
+              </div>
+            )}
+            {game.tags.length > 0 && (
+              <div className="flex gap-1 flex-wrap">
+                {game.tags.slice(0, 5).map((t) => (
+                  <Badge key={`tag-${t}`} className="text-xs bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
+                    {t}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
         {/* Description */}
-        <p
-          className={`text-sm text-muted-foreground ${
-            showMore ? "" : "line-clamp-2"
-          }`}
-        >
+        <p className="text-sm text-muted-foreground">
           {game.description}
         </p>
-        {game.description.length > 120 && (
-          <button
-            className="text-xs text-primary hover:underline"
-            onClick={() => setShowMore((p) => !p)}
-          >
-            {showMore ? "Show less" : "Show more"}
-          </button>
-        )}
 
         {/* Score visualization */}
-        <div className="space-y-2">
+        <div className="space-y-2 mt-auto pt-3 border-t">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-muted-foreground">
               Score Breakdown
@@ -96,7 +103,7 @@ export function RecommendCard({ game, rank }: RecommendCardProps) {
                     ? "bg-primary text-primary-foreground"
                     : "hover:bg-muted"
                 }`}
-                onClick={() => setChartMode("radar")}
+                onClick={() => onChartModeChange("radar")}
               >
                 Radar
               </button>
@@ -106,7 +113,7 @@ export function RecommendCard({ game, rank }: RecommendCardProps) {
                     ? "bg-primary text-primary-foreground"
                     : "hover:bg-muted"
                 }`}
-                onClick={() => setChartMode("bars")}
+                onClick={() => onChartModeChange("bars")}
               >
                 Bars
               </button>

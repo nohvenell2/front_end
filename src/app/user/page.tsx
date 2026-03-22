@@ -19,6 +19,24 @@ export default function UserPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+
+  const handleSelectModeToggle = () => {
+    setSelectMode((prev) => {
+      if (prev) setSelectedIds(new Set());
+      return !prev;
+    });
+  };
+
+  const handleToggleSelect = (appid: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(appid)) next.delete(appid);
+      else next.add(appid);
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -133,19 +151,45 @@ export default function UserPage() {
           )}
 
           {!libraryLoading && !libraryError && displayGames.length > 0 && (
-            <GameLibrary games={displayGames} />
+            <GameLibrary
+              games={displayGames}
+              selectable={selectMode}
+              selectedIds={selectedIds}
+              onToggleSelect={handleToggleSelect}
+            />
           )}
         </section>
       </main>
 
       {/* Sticky action bar */}
       <div className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex gap-3 justify-end">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex gap-3 items-center">
+          <div className="mr-auto flex items-center gap-2">
+            <Button
+              variant={selectMode ? "default" : "outline"}
+              size="sm"
+              onClick={handleSelectModeToggle}
+            >
+              {selectMode ? `Select (${selectedIds.size})` : "Select"}
+            </Button>
+            {selectMode && selectedIds.size > 0 && (
+              <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>
+                Clear
+              </Button>
+            )}
+          </div>
           <Button variant="outline" onClick={() => setSettingsOpen(true)}>
             Configure Recommendations
           </Button>
           <Button
-            onClick={() => router.push("/recommend")}
+            onClick={() => {
+              const params = new URLSearchParams();
+              if (selectMode && selectedIds.size > 0) {
+                params.set("selected", Array.from(selectedIds).join(","));
+              }
+              const query = params.toString();
+              router.push(`/recommend${query ? `?${query}` : ""}`);
+            }}
             disabled={displayGames.length === 0}
           >
             Get Recommendations
