@@ -1,9 +1,15 @@
 # env
 .env*
+!.env.example
 # etc
 etc/
 sample/
 dev_docs/
 # claude
 .claude/
+# Next.js
 node_modules
+.next/
+out/
+# Docker
+
