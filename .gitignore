@@ -11,5 +11,6 @@ dev_docs/
 node_modules
 .next/
 out/
+tsconfig.tsbuildinfo
 # Docker
 
