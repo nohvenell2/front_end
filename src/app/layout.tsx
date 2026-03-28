@@ -1,14 +1,10 @@
 import type { Metadata } from "next";
-import { Noto_Sans_KR } from "next/font/google";
+import { Noto_Sans_KR, Geist } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import { cn } from "@/lib/utils";
 
-const notoSansKR = Noto_Sans_KR({
-  subsets: ["latin"],
-  weight: ["400", "600", "700"],
-  variable: "--font-sans",
-  display: "swap",
-});
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   title: "Steam Game Recommender",
@@ -21,8 +17,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={notoSansKR.variable} suppressHydrationWarning>
+    <html lang="en" className={cn("font-sans", geist.variable)}>
+      <body className={geist.variable} suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>
