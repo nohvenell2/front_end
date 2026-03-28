@@ -554,6 +554,21 @@ export default function UserPage() {
     el.style.cursor = "grab";
   }, []);
 
+  // Wheel → horizontal scroll (non-passive so we can preventDefault)
+  useEffect(() => {
+    if (viewMode !== "scroll") return;
+    const el = scrollRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const d = drag.current;
+      cancelAnimationFrame(d.raf);
+      el.scrollLeft += e.deltaY + e.deltaX;
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [viewMode]);
+
   // Redirect if unauthenticated
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/");
