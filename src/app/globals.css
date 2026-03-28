@@ -1,1 +1,31 @@
 @import "tailwindcss";
+
+:root {
+  --color-bg-primary: #0e1117;
+  --color-bg-elevated: #16202d;
+  --color-bg-header: #171a21;
+  --color-border: #2a475e;
+  --color-border-active: #417a9b;
+  --color-accent: #67c1f5;
+  --color-accent-green: #4c6b22;
+  --color-accent-cta: #5c7e10;
+  --color-cta-text: #d4e157;
+  --color-text-primary: #c7d5e0;
+  --color-text-secondary: #8f98a0;
+  --color-text-link: #66c0f4;
+  --color-text-dim: #4a6b80;
+  --color-error: #f44747;
+  --color-error-bg: #2a1517;
+}
+
+body {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans), sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse {
+    animation: none;
+  }
+}
