@@ -2,12 +2,12 @@
 
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { fetchSteamLibrary, fetchGamesInfo } from "@/lib/api-client";
-import { enrichGames, formatPlaytime, steamIconUrl } from "@/lib/utils";
+import { enrichGames, formatPlaytime, steamIconUrl, steamHeaderUrl } from "@/lib/utils";
 import { MAX_GAME_SELECTION } from "@/lib/constants";
 import type { SteamGame, SteamGameEnriched } from "@/types/steam";
 
@@ -72,7 +72,7 @@ function GameRowSkeleton() {
 function StatCard({ value, label }: { value: string; label: string }) {
   return (
     <div
-      className="rounded-sm p-4 flex flex-col gap-1"
+      className="rounded-sm p-4 flex flex-col gap-1 items-center text-center"
       style={{
         backgroundColor: "var(--color-bg-elevated)",
         border: "1px solid var(--color-border)",
@@ -112,10 +112,10 @@ function DistributionChart({
         border: "1px solid var(--color-border)",
       }}
     >
-      <p className="text-xs font-semibold mb-3" style={{ color: "var(--color-text-secondary)" }}>
+      <p className="text-xs font-semibold mb-3 uppercase tracking-wide" style={{ color: "var(--color-text-secondary)" }}>
         {title}
       </p>
-      <ResponsiveContainer width="100%" height={280}>
+      <ResponsiveContainer width="100%" height={320}>
         <BarChart data={data} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 0 }}>
           <XAxis type="number" tick={{ fontSize: 10, fill: "var(--color-text-secondary)" }} axisLine={false} tickLine={false} />
           <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 10, fill: "var(--color-text-secondary)" }} axisLine={false} tickLine={false} />
@@ -136,37 +136,44 @@ function DistributionChart({
   );
 }
 
-// ── Game Row ──────────────────────────────────────────────────────────────────
+// ── Game Card ─────────────────────────────────────────────────────────────────
 
-function GameRow({
+function GameCard({
   game,
+  genres,
+  headerImage,
   selected,
   onToggle,
   disabled,
+  priority,
 }: {
   game: SteamGame;
+  genres: string[];
+  headerImage?: string;
   selected: boolean;
   onToggle: (appid: number) => void;
   disabled: boolean;
+  priority?: boolean;
 }) {
+  const [imgError, setImgError] = useState(false);
+  const imgSrc = headerImage ?? steamHeaderUrl(game.appid);
+
+  // Reset error state when the image URL changes (e.g. enriched data arrives)
+  const prevSrc = useRef(imgSrc);
+  if (prevSrc.current !== imgSrc) {
+    prevSrc.current = imgSrc;
+    if (imgError) setImgError(false);
+  }
+
   return (
     <label
-      className="flex items-center gap-3 px-4 cursor-pointer transition-colors"
+      className="relative flex flex-col h-full cursor-pointer rounded-sm overflow-hidden transition-colors"
       style={{
-        minHeight: 48,
-        backgroundColor: selected ? "var(--color-bg-elevated)" : "transparent",
-        borderLeft: selected
+        backgroundColor: "var(--color-bg-elevated)",
+        border: selected
           ? "2px solid var(--color-border-active)"
-          : "2px solid transparent",
-      }}
-      onMouseEnter={(e) => {
-        if (!selected)
-          (e.currentTarget as HTMLElement).style.borderLeftColor =
-            "var(--color-border-active)";
-      }}
-      onMouseLeave={(e) => {
-        if (!selected)
-          (e.currentTarget as HTMLElement).style.borderLeftColor = "transparent";
+          : "2px solid var(--color-border)",
+        opacity: disabled && !selected ? 0.5 : 1,
       }}
     >
       <input
@@ -174,35 +181,72 @@ function GameRow({
         checked={selected}
         disabled={disabled && !selected}
         onChange={() => onToggle(game.appid)}
-        className="accent-[var(--color-accent)] w-4 h-4 shrink-0"
+        className="sr-only"
         aria-label={`${game.name} 선택`}
       />
-      {/* Thumbnail */}
-      <div className="shrink-0 overflow-hidden rounded-sm" style={{ width: 46, height: 28 }}>
-        {game.img_icon_url ? (
-          <Image
-            src={steamIconUrl(game.appid, game.img_icon_url)}
-            alt=""
-            width={46}
-            height={28}
-            className="object-cover w-full h-full"
-            unoptimized
-          />
+
+      {/* Header image */}
+      <div className="relative w-full" style={{ paddingTop: "46.7%" /* 215:100 ratio */ }}>
+        {imgError ? (
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ backgroundColor: "var(--color-border)" }}
+          >
+            <span style={{ fontSize: 20 }}>🎮</span>
+          </div>
         ) : (
-          <div className="w-full h-full" style={{ backgroundColor: "var(--color-border)" }} />
+          <Image
+            src={imgSrc}
+            alt=""
+            fill
+            className="object-cover"
+            unoptimized
+            loading={priority ? "eager" : "lazy"}
+            sizes="(max-width: 768px) 50vw, 25vw"
+            onError={() => setImgError(true)}
+          />
+        )}
+        {/* Selected overlay */}
+        {selected && (
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ backgroundColor: "rgba(65,122,155,0.35)" }}
+          >
+            <span className="text-xl">✓</span>
+          </div>
         )}
       </div>
-      {/* Name */}
-      <span
-        className="flex-1 min-w-0 text-sm truncate"
-        style={{ color: "var(--color-text-primary)" }}
-      >
-        {game.name}
-      </span>
-      {/* Playtime */}
-      <span className="text-xs shrink-0" style={{ color: "var(--color-text-secondary)" }}>
-        {formatPlaytime(game.playtime_forever)}
-      </span>
+
+      {/* Card body */}
+      <div className="flex flex-col gap-1.5 p-2.5">
+        <span
+          className="text-xs font-semibold leading-tight line-clamp-2"
+          style={{ color: "var(--color-text-primary)" }}
+        >
+          {game.name}
+        </span>
+        <span style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>
+          {formatPlaytime(game.playtime_forever)}
+        </span>
+        {genres.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-0.5">
+            {genres.slice(0, 5).map((g) => (
+              <span
+                key={g}
+                className="px-1 py-0.5 rounded-sm"
+                style={{
+                  fontSize: 9,
+                  backgroundColor: "var(--color-bg-header)",
+                  border: "1px solid var(--color-border)",
+                  color: "var(--color-text-secondary)",
+                }}
+              >
+                {g}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
     </label>
   );
 }
@@ -216,6 +260,7 @@ export default function UserPage() {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<"playtime" | "name">("playtime");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [chartsOpen, setChartsOpen] = useState(false);
 
   // Redirect if unauthenticated
   useEffect(() => {
@@ -285,7 +330,7 @@ export default function UserPage() {
         counts[genre] = (counts[genre] ?? 0) + 1;
     return Object.entries(counts)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 8)
+      .slice(0, 10)
       .map(([name, count]) => ({ name, count }));
   }, [enrichedGames]);
 
@@ -296,9 +341,15 @@ export default function UserPage() {
         counts[tag] = (counts[tag] ?? 0) + 1;
     return Object.entries(counts)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 8)
+      .slice(0, 10)
       .map(([name, count]) => ({ name, count }));
   }, [enrichedGames]);
+
+  // Enriched lookup map (appid → { genres, headerImage })
+  const enrichedMap = useMemo(
+    () => new Map(enrichedGames.map((g) => [g.appid, { genres: g.genres, headerImage: g.header_image }])),
+    [enrichedGames]
+  );
 
   // Filtered + sorted library
   const filteredGames = useMemo<SteamGame[]>(() => {
@@ -344,7 +395,7 @@ export default function UserPage() {
         style={{ backgroundColor: "var(--color-bg-primary)" }}
       >
         <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
-          로딩 중...
+          Loading...
         </span>
       </div>
     );
@@ -386,12 +437,12 @@ export default function UserPage() {
               color: "var(--color-text-secondary)",
             }}
           >
-            로그아웃
+            Sign out
           </button>
         </div>
       </nav>
 
-      <div className="max-w-5xl mx-auto px-6 py-6 flex flex-col gap-6">
+      <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col gap-6">
         {/* ── Stats Dashboard ── */}
         {libraryLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -402,25 +453,41 @@ export default function UserPage() {
         ) : libraryError ? null : stats ? (
           <>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              <StatCard value={stats.totalGames.toLocaleString()} label="보유 게임" />
-              <StatCard value={formatPlaytime(stats.totalPlaytime)} label="총 플레이타임" />
-              <StatCard value={enrichLoading ? "..." : stats.topGenre} label="최다 장르" />
-              <StatCard value={enrichLoading ? "..." : stats.topTag}   label="최다 태그" />
-              <StatCard value={String(selectedIds.size)} label={`선택됨 / ${MAX_GAME_SELECTION}`} />
+              <StatCard value={stats.totalGames.toLocaleString()} label="Games" />
+              <StatCard value={formatPlaytime(stats.totalPlaytime)} label="Total Playtime" />
+              <StatCard value={enrichLoading ? "..." : stats.topGenre} label="Top Genre" />
+              <StatCard value={enrichLoading ? "..." : stats.topTag}   label="Top Tag" />
+              <StatCard value={String(selectedIds.size)} label={`Selected / ${MAX_GAME_SELECTION}`} />
             </div>
-            <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
-              * 장르·태그 정보는 플레이타임 기준 상위 {ENRICH_LIMIT}개 게임 기준
-            </p>
-            {enrichLoading ? (
-              <div className="flex gap-4">
-                <SkeletonBlock className="flex-1 h-72" />
-                <SkeletonBlock className="flex-1 h-72" />
-              </div>
-            ) : (
-              <div className="flex gap-4">
-                <DistributionChart title="장르 분포" data={genreChartData} barColor="var(--color-accent)" />
-                <DistributionChart title="태그 분포" data={tagChartData}  barColor="#8f5fde" />
-              </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setChartsOpen((v) => !v)}
+                className="text-xs px-3 py-1.5 rounded-sm transition-opacity hover:opacity-80 flex items-center gap-1.5"
+                style={{
+                  border: "1px solid var(--color-border)",
+                  color: "var(--color-text-secondary)",
+                  backgroundColor: "var(--color-bg-elevated)",
+                }}
+              >
+                <span>{chartsOpen ? "▲" : "▼"}</span>
+                Genre / Tag Chart
+              </button>
+              <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+                * Top {ENRICH_LIMIT} games by playtime
+              </span>
+            </div>
+            {chartsOpen && (
+              enrichLoading ? (
+                <div className="flex gap-4">
+                  <SkeletonBlock className="flex-1 h-96" />
+                  <SkeletonBlock className="flex-1 h-96" />
+                </div>
+              ) : (
+                <div className="flex gap-4">
+                  <DistributionChart title="Genre Distribution" data={genreChartData} barColor="var(--color-accent)" />
+                  <DistributionChart title="Tag Distribution"   data={tagChartData}  barColor="#8f5fde" />
+                </div>
+              )
             )}
           </>
         ) : null}
@@ -440,7 +507,7 @@ export default function UserPage() {
           >
             <input
               type="search"
-              placeholder="게임 검색..."
+              placeholder="Search games..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="flex-1 min-w-[160px] text-sm px-3 py-1.5 rounded-sm outline-none focus:border-[var(--color-border-active)]"
@@ -460,8 +527,8 @@ export default function UserPage() {
                 color: "var(--color-text-secondary)",
               }}
             >
-              <option value="playtime">플레이타임순</option>
-              <option value="name">이름순</option>
+              <option value="playtime">By Playtime</option>
+              <option value="name">By Name</option>
             </select>
             <button
               onClick={handleRecommend}
@@ -472,16 +539,22 @@ export default function UserPage() {
               }}
             >
               {selectedIds.size > 0
-                ? `${selectedIds.size}개 게임으로 추천받기`
-                : "전체 라이브러리로 추천받기"}
+                ? `Recommend from ${selectedIds.size} selected`
+                : "Recommend from full library"}
             </button>
           </div>
 
-          {/* Game list */}
+          {/* Game grid */}
           {libraryLoading ? (
-            <div className="flex flex-col divide-y" style={{ borderColor: "var(--color-border)" }}>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4">
               {Array.from({ length: 8 }).map((_, i) => (
-                <GameRowSkeleton key={i} />
+                <div key={i} className="flex flex-col rounded-sm overflow-hidden animate-pulse" style={{ border: "2px solid var(--color-border)" }}>
+                  <div className="w-full" style={{ paddingTop: "46.7%", backgroundColor: "var(--color-border)" }} />
+                  <div className="flex flex-col gap-2 p-2.5">
+                    <div className="h-3 rounded-sm" style={{ backgroundColor: "var(--color-border)" }} />
+                    <div className="h-2 w-12 rounded-sm" style={{ backgroundColor: "var(--color-border)" }} />
+                  </div>
+                </div>
               ))}
             </div>
           ) : libraryError ? (
@@ -491,10 +564,10 @@ export default function UserPage() {
             >
               <span className="text-3xl">⚠️</span>
               <p className="text-sm font-semibold" style={{ color: "var(--color-error)" }}>
-                라이브러리를 불러올 수 없습니다
+                Failed to load library
               </p>
               <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
-                Steam 프로필이 공개 상태인지 확인하거나 잠시 후 다시 시도해주세요.
+                Make sure your Steam profile is set to public, or try again later.
               </p>
               <button
                 onClick={() => window.location.reload()}
@@ -504,17 +577,17 @@ export default function UserPage() {
                   color: "var(--color-error)",
                 }}
               >
-                다시 시도
+                Try again
               </button>
             </div>
           ) : filteredGames.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-12 text-center">
               <span className="text-3xl">🔍</span>
               <p className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
-                검색 결과가 없습니다
+                No results found
               </p>
               <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
-                다른 키워드로 검색해보세요.
+                Try a different search term.
               </p>
               <button
                 onClick={() => setSearch("")}
@@ -524,23 +597,26 @@ export default function UserPage() {
                   color: "var(--color-text-secondary)",
                 }}
               >
-                검색 초기화
+                Clear search
               </button>
             </div>
           ) : (
             <div
-              className="flex flex-col divide-y overflow-y-auto"
-              style={{ borderColor: "var(--color-border)", maxHeight: "60vh" }}
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4 overflow-y-auto"
+              style={{ maxHeight: "65vh" }}
               role="list"
               aria-label="게임 라이브러리"
             >
-              {filteredGames.map((game) => (
+              {filteredGames.map((game, i) => (
                 <div key={game.appid} role="listitem">
-                  <GameRow
+                  <GameCard
                     game={game}
+                    genres={enrichedMap.get(game.appid)?.genres ?? []}
+                    headerImage={enrichedMap.get(game.appid)?.headerImage}
                     selected={selectedIds.has(game.appid)}
                     onToggle={toggleSelect}
                     disabled={selectedIds.size >= MAX_GAME_SELECTION}
+                    priority={i === 0}
                   />
                 </div>
               ))}
@@ -557,7 +633,7 @@ export default function UserPage() {
                 color: "var(--color-text-secondary)",
               }}
             >
-              최대 {MAX_GAME_SELECTION}개까지 선택할 수 있습니다.
+              You can select up to {MAX_GAME_SELECTION} games.
             </div>
           )}
         </div>

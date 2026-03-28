@@ -21,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko">
+    <html lang="en">
       <body className={notoSansKR.variable}>
         <Providers>{children}</Providers>
       </body>

@@ -23,7 +23,7 @@ export default async function HomePage() {
             Steam Game Recommender
           </h1>
           <p className="text-base" style={{ color: "var(--color-text-secondary)" }}>
-            Steam 라이브러리 기반 맞춤 게임 추천
+            Personalized game recommendations from your Steam library
           </p>
         </div>
 
@@ -48,8 +48,8 @@ export default async function HomePage() {
         </a>
 
         <p className="text-sm text-center" style={{ color: "var(--color-text-dim)" }}>
-          Steam 계정으로 로그인하면 라이브러리를 기반으로<br />
-          개인화된 게임을 추천받을 수 있습니다.
+          Sign in to get personalized game recommendations<br />
+          based on your play history.
         </p>
       </div>
     </main>

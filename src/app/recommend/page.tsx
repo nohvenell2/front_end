@@ -144,7 +144,7 @@ function SettingsPanel({ onApply }: { onApply?: () => void }) {
       {/* Count */}
       <div className="flex flex-col gap-2">
         <label className="font-semibold" style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>
-          추천 수 <span style={{ color: "var(--color-accent)" }}>{settings.count}</span>
+          Count <span style={{ color: "var(--color-accent)" }}>{settings.count}</span>
         </label>
         <input
           type="range"
@@ -161,7 +161,7 @@ function SettingsPanel({ onApply }: { onApply?: () => void }) {
 
       {/* Weights */}
       <div className="flex flex-col gap-3">
-        <p className="font-semibold" style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>가중치</p>
+        <p className="font-semibold" style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>Weights</p>
         {(["similarity", "popularity", "rating", "recency"] as const).map((key) => (
           <div key={key} className="flex flex-col gap-1">
             <div className="flex justify-between" style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>
@@ -185,7 +185,7 @@ function SettingsPanel({ onApply }: { onApply?: () => void }) {
       {/* HalfLife */}
       <div className="flex flex-col gap-2">
         <label className="font-semibold" style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>
-          최신성 반감기 <span style={{ color: "var(--color-accent)" }}>{settings.halfLifeDays}일</span>
+          Recency Half-life <span style={{ color: "var(--color-accent)" }}>{settings.halfLifeDays}d</span>
         </label>
         <input
           type="range"
@@ -197,16 +197,16 @@ function SettingsPanel({ onApply }: { onApply?: () => void }) {
           className="w-full accent-[var(--color-accent)]"
         />
         <div className="flex justify-between" style={{ fontSize: 10, color: "var(--color-text-dim)" }}>
-          <span>180일</span><span>3650일</span>
+          <span>180d</span><span>3650d</span>
         </div>
       </div>
 
       {/* Filters */}
       <div className="flex flex-col gap-3">
-        <p className="font-semibold" style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>필터</p>
+        <p className="font-semibold" style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>Filters</p>
 
         <div className="flex flex-col gap-1">
-          <label style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>출시일 이후</label>
+          <label style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>Released after</label>
           <input
             type="date"
             value={settings.filters.minReleaseDate}
@@ -225,7 +225,7 @@ function SettingsPanel({ onApply }: { onApply?: () => void }) {
 
         <div className="flex flex-col gap-1">
           <label style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>
-            최소 리뷰 수 <span style={{ color: "var(--color-accent)" }}>{settings.filters.minReviewCount}</span>
+            Min. reviews <span style={{ color: "var(--color-accent)" }}>{settings.filters.minReviewCount}</span>
           </label>
           <input
             type="number"
@@ -245,7 +245,7 @@ function SettingsPanel({ onApply }: { onApply?: () => void }) {
 
         <div className="flex flex-col gap-1">
           <label style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>
-            최소 긍정 비율 <span style={{ color: "var(--color-accent)" }}>{settings.filters.minPositivePercent}%</span>
+            Min. positive % <span style={{ color: "var(--color-accent)" }}>{settings.filters.minPositivePercent}%</span>
           </label>
           <input
             type="range"
@@ -273,7 +273,7 @@ function SettingsPanel({ onApply }: { onApply?: () => void }) {
             color: "var(--color-text-secondary)",
           }}
         >
-          초기화
+          Reset
         </button>
         {onApply && (
           <button
@@ -284,7 +284,7 @@ function SettingsPanel({ onApply }: { onApply?: () => void }) {
               color: "var(--color-cta-text)",
             }}
           >
-            적용
+            Apply
           </button>
         )}
       </div>
@@ -449,12 +449,12 @@ function RecommendInner() {
               color: "var(--color-text-secondary)",
             }}
           >
-            ← 라이브러리
+            ← Library
           </button>
           <span className="text-sm font-semibold hidden sm:block" style={{ color: "var(--color-text-primary)" }}>
             {selectedAppids.length > 0
-              ? `${selectedAppids.length}개 게임 기반 추천`
-              : "전체 라이브러리 기반 추천"}
+              ? `Recommendations based on ${selectedAppids.length} selected games`
+              : "Recommendations based on full library"}
           </span>
         </div>
 
@@ -468,18 +468,18 @@ function RecommendInner() {
           }}
           aria-label="설정 열기"
         >
-          ⚙ 설정
+          ⚙ Settings
         </button>
 
         {/* Re-ranking indicator */}
         {isFetching && !recLoading && (
           <span className="text-xs hidden lg:block" style={{ color: "var(--color-text-secondary)" }}>
-            새로고침 중...
+            Refreshing...
           </span>
         )}
       </nav>
 
-      <div className="flex max-w-6xl mx-auto gap-0">
+      <div className="flex max-w-7xl mx-auto gap-0">
         {/* ── Settings Sidebar (lg) ── */}
         <aside
           className="hidden lg:flex flex-col shrink-0 overflow-y-auto sticky top-[53px] self-start"
@@ -493,7 +493,7 @@ function RecommendInner() {
             className="px-4 pt-4 pb-2 text-xs font-semibold"
             style={{ color: "var(--color-text-secondary)" }}
           >
-            추천 설정
+            Settings
           </div>
           <SettingsPanel />
         </aside>
@@ -512,7 +512,7 @@ function RecommendInner() {
                   }}
                 />
                 <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
-                  당신이 좋아할 게임을 찾고 있습니다...
+                  Finding games you&apos;ll love...
                 </span>
               </div>
               {Array.from({ length: 5 }).map((_, i) => <CardSkeleton key={i} />)}
@@ -528,10 +528,10 @@ function RecommendInner() {
             >
               <span className="text-3xl">⚠️</span>
               <p className="text-sm font-semibold" style={{ color: "var(--color-error)" }}>
-                추천을 불러올 수 없습니다
+                Failed to load recommendations
               </p>
               <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
-                서버에 일시적인 문제가 있거나 라이브러리 정보를 읽을 수 없습니다.
+                There was a server error or your library could not be read.
               </p>
               <button
                 onClick={() => window.location.reload()}
@@ -541,7 +541,7 @@ function RecommendInner() {
                   color: "var(--color-error)",
                 }}
               >
-                다시 시도
+                Try again
               </button>
             </div>
           ) : rankedGames.length === 0 ? (
@@ -549,10 +549,10 @@ function RecommendInner() {
             <div className="flex flex-col items-center gap-3 py-16 text-center">
               <span className="text-3xl">🎮</span>
               <p className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
-                추천 결과가 없습니다
+                No recommendations found
               </p>
               <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
-                필터 조건을 완화하거나 다른 게임을 선택해보세요.
+                Try relaxing the filters or selecting different games.
               </p>
               <button
                 onClick={() => router.push("/user")}
@@ -562,14 +562,14 @@ function RecommendInner() {
                   color: "var(--color-cta-text)",
                 }}
               >
-                게임 다시 선택
+                Select games
               </button>
             </div>
           ) : (
             /* Success */
             <div className="flex flex-col gap-4">
               <p className="text-xs" style={{ color: "var(--color-text-dim)" }}>
-                상위 {rankedGames.length}개 추천 · 가중치 변경 시 즉시 재정렬됩니다
+                Top {rankedGames.length} recommendations · Weight changes re-rank instantly
               </p>
               {rankedGames.map((game) => (
                 <RecommendCard key={game.game_id} game={game} />
@@ -596,7 +596,7 @@ export default function RecommendPage() {
           style={{ backgroundColor: "var(--color-bg-primary)" }}
         >
           <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
-            로딩 중...
+            Loading...
           </span>
         </div>
       }
