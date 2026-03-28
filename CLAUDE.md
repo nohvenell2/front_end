@@ -1,5 +1,14 @@
 # CLAUDE.md
 
+## gstack
+
+Use /browse from gstack for all web browsing. Never use mcp__claude-in-chrome__* tools.
+Available skills: /office-hours, /plan-ceo-review, /plan-eng-review, /plan-design-review,
+/design-consultation, /review, /ship, /land-and-deploy, /canary, /benchmark, /browse,
+/qa, /qa-only, /design-review, /setup-browser-cookies, /setup-deploy, /retro,
+/investigate, /document-release, /codex, /cso, /autoplan, /careful, /freeze, /guard,
+/unfreeze, /gstack-upgrade.
+
 ## What is this?
 
 Steam Game Recommender frontend — Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4.
@@ -24,8 +33,7 @@ src/
 ├── types/                    # ✅ TypeScript interfaces
 ├── context/                  # ✅ Settings state (React Context + localStorage)
 ├── components/providers.tsx  # ✅ Provider stack (Session + Query + Settings)
-├── auth.ts                   # ✅ NextAuth config (Steam OpenID)
-└── proxy.ts                  # ✅ Rate limiting middleware
+└── auth.ts                   # ✅ NextAuth config (Steam OpenID)
 ```
 
 ## Environment Variables

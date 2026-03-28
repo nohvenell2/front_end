@@ -51,8 +51,7 @@ src/
 │   ├── recommend.ts             # Recommendation types & API request/response
 │   └── settings.ts              # Recommendation settings type
 │
-├── auth.ts                      # NextAuth configuration (Steam OpenID)
-└── proxy.ts                     # Rate limiting middleware
+└── auth.ts                      # NextAuth configuration (Steam OpenID)
 ```
 
 ## Environment Variables
@@ -76,8 +75,6 @@ Defined in `.env` (see `.env.example`):
 | `NEXT_PUBLIC_DEFAULT_MIN_POSITIVE_PERCENT` | Client | No | Min positive review % (default: 50) |
 | `NEXT_PUBLIC_DEFAULT_RECOMMEND_COUNT` | Client | No | Number of results to display (default: 10) |
 | `NEXT_PUBLIC_CANDIDATE_LIMIT` | Client | No | Max candidates to fetch from API (default: 50) |
-| `RATE_LIMIT_MAX_REQUESTS` | Server | No | Rate limit max requests (default: 10000) |
-| `RATE_LIMIT_WINDOW_MS` | Server | No | Rate limit window in ms (default: 60000) |
 
 ---
 
