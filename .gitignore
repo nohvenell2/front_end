@@ -4,7 +4,6 @@
 # etc
 etc/
 sample/
-dev_docs/
 # claude
 .claude/
 # Next.js
