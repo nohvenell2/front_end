@@ -563,7 +563,7 @@ export default function UserPage() {
       e.preventDefault();
       const d = drag.current;
       cancelAnimationFrame(d.raf);
-      el.scrollLeft += e.deltaY + e.deltaX;
+      el.scrollLeft += (e.deltaY + e.deltaX) * 3;
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
