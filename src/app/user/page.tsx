@@ -220,12 +220,12 @@ function GameCard({
       {/* Card body */}
       <div className="flex flex-col gap-1.5 p-2.5">
         <span
-          className="text-xs font-semibold leading-tight line-clamp-2"
+          className="text-sm font-semibold leading-tight line-clamp-2"
           style={{ color: "var(--color-text-primary)" }}
         >
           {game.name}
         </span>
-        <span style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>
+        <span style={{ fontSize: 13, color: "var(--color-text-secondary)" }}>
           {formatPlaytime(game.playtime_forever)}
         </span>
         {genres.length > 0 && (
@@ -235,7 +235,7 @@ function GameCard({
                 key={g}
                 className="px-1 py-0.5 rounded-sm"
                 style={{
-                  fontSize: 9,
+                  fontSize: 11,
                   backgroundColor: "var(--color-bg-header)",
                   border: "1px solid var(--color-border)",
                   color: "var(--color-text-secondary)",

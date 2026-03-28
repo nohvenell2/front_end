@@ -25,7 +25,7 @@ function ScoreBar({ scoreKey, value }: { scoreKey: string; value: number }) {
   const pct = Math.round(value * 100);
   return (
     <div className="flex items-center gap-2">
-      <span className="w-10 text-right shrink-0" style={{ fontSize: 10, color: "var(--color-text-secondary)" }}>
+      <span className="w-12 text-right shrink-0" style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>
         {label}
       </span>
       <div
@@ -37,7 +37,7 @@ function ScoreBar({ scoreKey, value }: { scoreKey: string; value: number }) {
           style={{ width: `${pct}%`, backgroundColor: color }}
         />
       </div>
-      <span className="w-7 shrink-0" style={{ fontSize: 10, color: "var(--color-text-dim)" }}>
+      <span className="w-8 shrink-0" style={{ fontSize: 12, color: "var(--color-text-dim)" }}>
         {pct}%
       </span>
     </div>
@@ -76,13 +76,13 @@ function RecommendCard({ game }: { game: RankedGame }) {
             href={game.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm font-semibold leading-tight hover:underline truncate"
+            className="text-base font-semibold leading-tight hover:underline truncate"
             style={{ color: "var(--color-text-link)" }}
           >
             {game.title}
           </a>
           <span
-            className="shrink-0 text-xs font-bold"
+            className="shrink-0 text-sm font-bold"
             style={{ color: "var(--color-accent)" }}
           >
             {Math.round(game.finalScore * 100)}
@@ -90,7 +90,7 @@ function RecommendCard({ game }: { game: RankedGame }) {
         </div>
 
         {/* Meta */}
-        <div className="flex flex-wrap gap-x-3 gap-y-0.5" style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>
+        <div className="flex flex-wrap gap-x-3 gap-y-0.5" style={{ fontSize: 13, color: "var(--color-text-secondary)" }}>
           {game.developer && <span>{game.developer}</span>}
           {game.release_date_original && <span>{game.release_date_original}</span>}
           {game.all_reviews && <span>{game.all_reviews}</span>}
@@ -104,7 +104,7 @@ function RecommendCard({ game }: { game: RankedGame }) {
                 key={g}
                 className="px-1.5 py-0.5 rounded-sm"
                 style={{
-                  fontSize: 10,
+                  fontSize: 12,
                   backgroundColor: "var(--color-bg-header)",
                   border: "1px solid var(--color-border)",
                   color: "var(--color-text-secondary)",
