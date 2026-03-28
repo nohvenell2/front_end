@@ -28,7 +28,7 @@ function GameScrollCard({
   return (
     <label
       className={cn(
-        "relative flex flex-col w-[300px] h-full shrink-0 cursor-pointer select-none rounded-sm overflow-hidden transition-colors",
+        "relative flex flex-col w-[300px] h-[360px] shrink-0 cursor-pointer select-none rounded-sm overflow-hidden transition-colors",
         selected
           ? "border-2 border-accent"
           : "border-2 border-border hover:border-accent/50",
@@ -189,7 +189,7 @@ export function GameCarousel({
     <div
       ref={scrollRef}
       className="flex gap-3 overflow-x-auto pb-2 cursor-grab"
-      style={{ scrollbarWidth: "thin" }}
+      style={{ scrollbarWidth: "thin", scrollbarColor: "var(--color-steam-border) var(--color-bg-primary)" }}
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
