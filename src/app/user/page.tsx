@@ -252,6 +252,85 @@ function GameCard({
   );
 }
 
+// ── Game Row (list view) ──────────────────────────────────────────────────────
+
+function GameRow({
+  game,
+  headerImage,
+  selected,
+  onToggle,
+  disabled,
+}: {
+  game: SteamGame;
+  headerImage?: string;
+  selected: boolean;
+  onToggle: (appid: number) => void;
+  disabled: boolean;
+}) {
+  return (
+    <label
+      style={{
+        position: "relative",
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        padding: "10px 16px",
+        minHeight: 64,
+        width: "100%",
+        cursor: "pointer",
+        userSelect: "none",
+        backgroundColor: selected ? "rgba(65,122,155,0.12)" : "var(--color-bg-elevated)",
+        border: selected ? "1px solid var(--color-border-active)" : "1px solid var(--color-border)",
+        borderRadius: 8,
+        opacity: disabled && !selected ? 0.5 : 1,
+        boxSizing: "border-box",
+      }}
+    >
+      <input
+        type="checkbox"
+        checked={selected}
+        disabled={disabled && !selected}
+        onChange={() => onToggle(game.appid)}
+        className="sr-only"
+        aria-label={`${game.name} 선택`}
+      />
+      {/* Thumbnail */}
+      <div style={{ flexShrink: 0, width: 80, height: 47, borderRadius: 3, overflow: "hidden" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={headerImage ?? steamHeaderUrl(game.appid)}
+          alt=""
+          draggable={false}
+          style={{ width: 80, height: 47, objectFit: "cover", display: "block", userSelect: "none" }}
+        />
+      </div>
+      {/* Name */}
+      <span style={{ flex: 1, minWidth: 0, fontSize: 14, color: "var(--color-text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        {game.name}
+      </span>
+      {/* Playtime */}
+      <span style={{ flexShrink: 0, fontSize: 12, color: "var(--color-text-secondary)" }}>
+        {formatPlaytime(game.playtime_forever)}
+      </span>
+      {/* Check overlay */}
+      {selected && (
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: 8,
+          backgroundColor: "rgba(65,122,155,0.25)",
+          pointerEvents: "none",
+        }}>
+          <span style={{ fontSize: 40, fontWeight: 700, color: "#4ade80", lineHeight: 1 }}>✓</span>
+        </div>
+      )}
+    </label>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function UserPage() {
@@ -262,6 +341,7 @@ export default function UserPage() {
   const [sort, setSort] = useState<"playtime" | "name">("playtime");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [chartsOpen, setChartsOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   // Redirect if unauthenticated
   useEffect(() => {
@@ -518,6 +598,23 @@ export default function UserPage() {
                 color: "var(--color-text-primary)",
               }}
             />
+            {/* View toggle */}
+            <div className="flex rounded-sm overflow-hidden shrink-0" style={{ border: "1px solid var(--color-border)" }}>
+              {(["grid", "list"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setViewMode(mode)}
+                  className="px-2.5 py-1.5 text-xs transition-colors"
+                  style={{
+                    backgroundColor: viewMode === mode ? "var(--color-border-active)" : "var(--color-bg-primary)",
+                    color: viewMode === mode ? "#fff" : "var(--color-text-secondary)",
+                  }}
+                  aria-label={mode === "grid" ? "그리드 보기" : "목록 보기"}
+                >
+                  {mode === "grid" ? "⊞" : "☰"}
+                </button>
+              ))}
+            </div>
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as "playtime" | "name")}
@@ -643,7 +740,7 @@ export default function UserPage() {
                 Clear search
               </button>
             </div>
-          ) : (
+          ) : viewMode === "grid" ? (
             <div
               className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4 overflow-y-auto"
               style={{ maxHeight: "65vh" }}
@@ -662,6 +759,24 @@ export default function UserPage() {
                     priority={i === 0}
                   />
                 </div>
+              ))}
+            </div>
+          ) : (
+            <div
+              className="flex flex-col gap-2 p-3 overflow-y-auto"
+              style={{ maxHeight: "65vh" }}
+              role="list"
+              aria-label="게임 라이브러리"
+            >
+              {filteredGames.map((game) => (
+                <GameRow
+                  key={game.appid}
+                  game={game}
+                  headerImage={enrichedMap.get(game.appid)?.headerImage}
+                  selected={selectedIds.has(game.appid)}
+                  onToggle={toggleSelect}
+                  disabled={selectedIds.size >= MAX_GAME_SELECTION}
+                />
               ))}
             </div>
           )}
