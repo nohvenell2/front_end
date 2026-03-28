@@ -331,6 +331,156 @@ function GameRow({
   );
 }
 
+// ── Game Scroll Card (horizontal carousel view) ───────────────────────────────
+
+function GameScrollCard({
+  game,
+  headerImage,
+  description,
+  genres,
+  selected,
+  onToggle,
+  disabled,
+}: {
+  game: SteamGame;
+  headerImage?: string;
+  description?: string;
+  genres: string[];
+  selected: boolean;
+  onToggle: (appid: number) => void;
+  disabled: boolean;
+}) {
+  return (
+    <label
+      style={{
+        position: "relative",
+        display: "flex",
+        flexDirection: "column",
+        width: 300,
+        height: "100%",
+        flexShrink: 0,
+        cursor: "pointer",
+        userSelect: "none",
+        backgroundColor: "var(--color-bg-elevated)",
+        border: selected
+          ? "2px solid var(--color-border-active)"
+          : "2px solid var(--color-border)",
+        borderRadius: 8,
+        overflow: "hidden",
+        opacity: disabled && !selected ? 0.5 : 1,
+        boxSizing: "border-box",
+      }}
+    >
+      <input
+        type="checkbox"
+        checked={selected}
+        disabled={disabled && !selected}
+        onChange={() => onToggle(game.appid)}
+        className="sr-only"
+        aria-label={`${game.name} 선택`}
+      />
+      {/* Header image */}
+      <div style={{ position: "relative", width: "100%", paddingTop: "46.7%", flexShrink: 0 }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={headerImage ?? steamHeaderUrl(game.appid)}
+          alt=""
+          draggable={false}
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            display: "block",
+            userSelect: "none",
+          }}
+        />
+        {selected && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "rgba(65,122,155,0.35)",
+              pointerEvents: "none",
+            }}
+          >
+            <span style={{ fontSize: 52, fontWeight: 700, color: "#4ade80", lineHeight: 1 }}>✓</span>
+          </div>
+        )}
+      </div>
+      {/* Body */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+          padding: "12px 14px",
+          flex: 1,
+          minHeight: 0,
+          overflow: "hidden",
+        }}
+      >
+        <span
+          style={{
+            fontSize: 15,
+            fontWeight: 600,
+            color: "var(--color-text-primary)",
+            lineHeight: 1.3,
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
+          {game.name}
+        </span>
+        <span style={{ fontSize: 12, color: "var(--color-text-secondary)", flexShrink: 0 }}>
+          {formatPlaytime(game.playtime_forever)}
+        </span>
+        {description && (
+          <p
+            style={{
+              fontSize: 12,
+              color: "var(--color-text-secondary)",
+              lineHeight: 1.6,
+              display: "-webkit-box",
+              WebkitLineClamp: 5,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+              margin: 0,
+            }}
+          >
+            {description}
+          </p>
+        )}
+        {genres.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: "auto", paddingTop: 4, flexShrink: 0 }}>
+            {genres.slice(0, 4).map((g) => (
+              <span
+                key={g}
+                style={{
+                  fontSize: 11,
+                  padding: "2px 6px",
+                  borderRadius: 3,
+                  backgroundColor: "var(--color-bg-header)",
+                  border: "1px solid var(--color-border)",
+                  color: "var(--color-text-secondary)",
+                }}
+              >
+                {g}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </label>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function UserPage() {
@@ -341,7 +491,68 @@ export default function UserPage() {
   const [sort, setSort] = useState<"playtime" | "name">("playtime");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [chartsOpen, setChartsOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "scroll">("grid");
+
+  // Drag-scroll state for carousel view
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const drag = useRef({ active: false, startX: 0, scrollLeft: 0, velX: 0, lastX: 0, lastT: 0, moved: false, raf: 0 });
+
+  // Drag-scroll handlers for carousel view
+  const onScrollMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const d = drag.current;
+    cancelAnimationFrame(d.raf);
+    d.active = true;
+    d.moved = false;
+    d.startX = e.pageX - el.offsetLeft;
+    d.scrollLeft = el.scrollLeft;
+    d.velX = 0;
+    d.lastX = e.pageX;
+    d.lastT = Date.now();
+    el.style.cursor = "grabbing";
+  }, []);
+
+  const onScrollMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const el = scrollRef.current;
+    const d = drag.current;
+    if (!d.active || !el) return;
+    e.preventDefault();
+    const x = e.pageX - el.offsetLeft;
+    el.scrollLeft = d.scrollLeft - (x - d.startX);
+    const now = Date.now();
+    const dt = now - d.lastT;
+    if (dt > 0) {
+      d.velX = (e.pageX - d.lastX) / dt;
+      d.lastX = e.pageX;
+      d.lastT = now;
+    }
+    if (Math.abs(x - d.startX) > 4) d.moved = true;
+  }, []);
+
+  const onScrollMouseUp = useCallback(() => {
+    const el = scrollRef.current;
+    const d = drag.current;
+    if (!el) return;
+    d.active = false;
+    el.style.cursor = "grab";
+    let vel = d.velX * 14;
+    const momentum = () => {
+      if (!scrollRef.current || Math.abs(vel) < 0.4) return;
+      scrollRef.current.scrollLeft -= vel;
+      vel *= 0.93;
+      d.raf = requestAnimationFrame(momentum);
+    };
+    d.raf = requestAnimationFrame(momentum);
+  }, []);
+
+  const onScrollMouseLeave = useCallback(() => {
+    const el = scrollRef.current;
+    const d = drag.current;
+    if (!d.active || !el) return;
+    d.active = false;
+    el.style.cursor = "grab";
+  }, []);
 
   // Redirect if unauthenticated
   useEffect(() => {
@@ -426,11 +637,20 @@ export default function UserPage() {
       .map(([name, count]) => ({ name, count }));
   }, [enrichedGames]);
 
-  // Enriched lookup map (appid → { genres, headerImage })
-  const enrichedMap = useMemo(
-    () => new Map(enrichedGames.map((g) => [g.appid, { genres: g.genres, headerImage: g.header_image }])),
-    [enrichedGames]
-  );
+  // Enriched lookup map (appid → { genres, headerImage, description })
+  const enrichedMap = useMemo(() => {
+    const infoById = new Map(gamesInfo?.data.map((g) => [g.game_id, g]) ?? []);
+    return new Map(
+      enrichedGames.map((g) => [
+        g.appid,
+        {
+          genres: g.genres,
+          headerImage: g.header_image,
+          description: infoById.get(g.appid)?.description,
+        },
+      ])
+    );
+  }, [enrichedGames, gamesInfo]);
 
   // Filtered + sorted library
   const filteredGames = useMemo<SteamGame[]>(() => {
@@ -600,7 +820,7 @@ export default function UserPage() {
             />
             {/* View toggle */}
             <div className="flex rounded-sm overflow-hidden shrink-0" style={{ border: "1px solid var(--color-border)" }}>
-              {(["grid", "list"] as const).map((mode) => (
+              {(["grid", "list", "scroll"] as const).map((mode) => (
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode)}
@@ -609,9 +829,9 @@ export default function UserPage() {
                     backgroundColor: viewMode === mode ? "var(--color-border-active)" : "var(--color-bg-primary)",
                     color: viewMode === mode ? "#fff" : "var(--color-text-secondary)",
                   }}
-                  aria-label={mode === "grid" ? "그리드 보기" : "목록 보기"}
+                  aria-label={mode === "grid" ? "그리드 보기" : mode === "list" ? "목록 보기" : "카드 슬라이드 보기"}
                 >
-                  {mode === "grid" ? "⊞" : "☰"}
+                  {mode === "grid" ? "⊞" : mode === "list" ? "☰" : "⇔"}
                 </button>
               ))}
             </div>
@@ -761,7 +981,7 @@ export default function UserPage() {
                 </div>
               ))}
             </div>
-          ) : (
+          ) : viewMode === "list" ? (
             <div
               className="flex flex-col gap-2 p-3 overflow-y-auto"
               style={{ maxHeight: "65vh" }}
@@ -778,6 +998,52 @@ export default function UserPage() {
                   disabled={selectedIds.size >= MAX_GAME_SELECTION}
                 />
               ))}
+            </div>
+          ) : (
+            /* Horizontal drag-scroll carousel */
+            <div
+              ref={scrollRef}
+              role="list"
+              aria-label="게임 라이브러리"
+              onMouseDown={onScrollMouseDown}
+              onMouseMove={onScrollMouseMove}
+              onMouseUp={onScrollMouseUp}
+              onMouseLeave={onScrollMouseLeave}
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                gap: 12,
+                padding: 16,
+                height: 420,
+                overflowX: "scroll",
+                overflowY: "hidden",
+                cursor: "grab",
+                scrollbarWidth: "thin",
+                scrollbarColor: "var(--color-border) transparent",
+                userSelect: "none",
+              }}
+            >
+              {filteredGames.map((game) => {
+                const info = enrichedMap.get(game.appid);
+                return (
+                  <div
+                    key={game.appid}
+                    role="listitem"
+                    style={{ height: "100%", flexShrink: 0, pointerEvents: drag.current.moved ? "none" : undefined }}
+                    onClickCapture={(e) => { if (drag.current.moved) { e.preventDefault(); e.stopPropagation(); drag.current.moved = false; } }}
+                  >
+                    <GameScrollCard
+                      game={game}
+                      headerImage={info?.headerImage}
+                      description={info?.description}
+                      genres={info?.genres ?? []}
+                      selected={selectedIds.has(game.appid)}
+                      onToggle={toggleSelect}
+                      disabled={selectedIds.size >= MAX_GAME_SELECTION}
+                    />
+                  </div>
+                );
+              })}
             </div>
           )}
 
