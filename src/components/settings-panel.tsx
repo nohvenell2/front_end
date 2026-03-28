@@ -34,7 +34,7 @@ export function SettingsPanel({ onApply }: SettingsPanelProps) {
           max={20}
           step={1}
           value={[settings.count]}
-          onValueChange={(v) => dispatch({ type: "SET_COUNT", payload: v[0] })}
+          onValueChange={(v) => dispatch({ type: "SET_COUNT", payload: (v as number[])[0] })}
         />
         <div className="flex justify-between text-[10px] text-muted-foreground/60">
           <span>5</span><span>20</span>
@@ -58,7 +58,7 @@ export function SettingsPanel({ onApply }: SettingsPanelProps) {
               step={1}
               value={[settings.weights[key]]}
               onValueChange={(v) =>
-                dispatch({ type: "SET_WEIGHT", payload: { key, value: v[0] } })
+                dispatch({ type: "SET_WEIGHT", payload: { key, value: (v as number[])[0] } })
               }
             />
           </div>
@@ -78,7 +78,7 @@ export function SettingsPanel({ onApply }: SettingsPanelProps) {
           max={3650}
           step={90}
           value={[settings.halfLifeDays]}
-          onValueChange={(v) => dispatch({ type: "SET_HALF_LIFE_DAYS", payload: v[0] })}
+          onValueChange={(v) => dispatch({ type: "SET_HALF_LIFE_DAYS", payload: (v as number[])[0] })}
         />
         <div className="flex justify-between text-[10px] text-muted-foreground/60">
           <span>180일</span><span>3650일</span>
@@ -131,7 +131,7 @@ export function SettingsPanel({ onApply }: SettingsPanelProps) {
             step={1}
             value={[settings.filters.minPositivePercent]}
             onValueChange={(v) =>
-              dispatch({ type: "SET_FILTER", payload: { key: "minPositivePercent", value: v[0] } })
+              dispatch({ type: "SET_FILTER", payload: { key: "minPositivePercent", value: (v as number[])[0] } })
             }
           />
           <div className="flex justify-between text-[10px] text-muted-foreground/60">
