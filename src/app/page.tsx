@@ -1,30 +1,27 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { SteamLoginButton } from "@/components/login/steam-login-button";
-import { PrivacyNotice } from "@/components/login/privacy-notice";
 
-export default async function LoginPage() {
+/**
+ * Home / Login Page
+ *
+ * This page should:
+ * 1. Check if the user is already authenticated (redirect to /user if so)
+ * 2. Display a Steam login button that navigates to /api/auth/steam/redirect
+ *
+ * Available session fields: session.user.steamid, .name, .image
+ * Login endpoint: GET /api/auth/steam/redirect (initiates Steam OpenID flow)
+ */
+export default async function HomePage() {
   const session = await auth();
   if (session?.user?.steamid) {
     redirect("/user");
   }
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center min-h-screen px-4">
-      <div className="flex flex-col items-center gap-6 text-center">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">
-            Steam Game Recommender
-          </h1>
-          <p className="text-muted-foreground max-w-xs">
-            Get personalized game recommendations based on your Steam play
-            history.
-          </p>
-        </div>
-
-        <SteamLoginButton />
-        <PrivacyNotice />
-      </div>
+    <main>
+      <h1>Steam Game Recommender</h1>
+      <p>Implement your login UI here.</p>
+      <a href="/api/auth/steam/redirect">Sign in with Steam</a>
     </main>
   );
 }
