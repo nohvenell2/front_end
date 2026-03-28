@@ -167,7 +167,7 @@ function GameCard({
 
   return (
     <label
-      className="relative flex flex-col h-full cursor-pointer rounded-sm overflow-hidden transition-colors"
+      className="relative flex flex-col h-full cursor-pointer rounded-sm overflow-hidden transition-colors select-none"
       style={{
         backgroundColor: "var(--color-bg-elevated)",
         border: selected
@@ -199,7 +199,8 @@ function GameCard({
             src={imgSrc}
             alt=""
             fill
-            className="object-cover"
+            className="object-cover select-none"
+            draggable={false}
             unoptimized
             loading={priority ? "eager" : "lazy"}
             sizes="(max-width: 768px) 50vw, 25vw"
@@ -212,7 +213,7 @@ function GameCard({
             className="absolute inset-0 flex items-center justify-center"
             style={{ backgroundColor: "rgba(65,122,155,0.35)" }}
           >
-            <span className="text-xl">✓</span>
+            <span className="text-5xl font-bold" style={{ color: "#4ade80" }}>✓</span>
           </div>
         )}
       </div>
@@ -543,6 +544,48 @@ export default function UserPage() {
                 : "Recommend from full library"}
             </button>
           </div>
+
+          {/* Selected chips */}
+          {selectedIds.size > 0 && library && (
+            <div
+              className="flex flex-wrap gap-2 px-4 py-2"
+              style={{
+                backgroundColor: "var(--color-bg-elevated)",
+                borderBottom: "1px solid var(--color-border)",
+              }}
+            >
+              {[...selectedIds].map((id) => {
+                const g = library.find((g) => g.appid === id);
+                if (!g) return null;
+                return (
+                  <button
+                    key={g.appid}
+                    onClick={() => toggleSelect(g.appid)}
+                    className="flex items-center gap-1 px-2 py-1 rounded-sm text-xs transition-opacity hover:opacity-75"
+                    style={{
+                      backgroundColor: "var(--color-bg-header)",
+                      border: "1px solid var(--color-border-active)",
+                      color: "var(--color-text-primary)",
+                    }}
+                  >
+                    {g.name}
+                    <span style={{ color: "var(--color-text-secondary)" }}>✕</span>
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                className="flex items-center gap-1 px-2 py-1 rounded-sm text-xs transition-opacity hover:opacity-75"
+                style={{
+                  backgroundColor: "#2a1517",
+                  border: "1px solid #f44747",
+                  color: "#f44747",
+                }}
+              >
+                Clear all
+              </button>
+            </div>
+          )}
 
           {/* Game grid */}
           {libraryLoading ? (
