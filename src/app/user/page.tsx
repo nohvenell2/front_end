@@ -495,7 +495,7 @@ export default function UserPage() {
 
   // Drag-scroll state for carousel view
   const scrollRef = useRef<HTMLDivElement>(null);
-  const drag = useRef({ active: false, startX: 0, scrollLeft: 0, velX: 0, lastX: 0, lastT: 0, moved: false, raf: 0 });
+  const drag = useRef({ active: false, startX: 0, scrollLeft: 0, velX: 0, lastX: 0, lastT: 0, moved: false, raf: 0, wheelTarget: 0, wheelRaf: 0 });
 
   // Drag-scroll handlers for carousel view
   const onScrollMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -554,19 +554,38 @@ export default function UserPage() {
     el.style.cursor = "grab";
   }, []);
 
-  // Wheel → horizontal scroll (non-passive so we can preventDefault)
+  // Wheel → smooth horizontal scroll (non-passive so we can preventDefault)
   useEffect(() => {
     if (viewMode !== "scroll") return;
     const el = scrollRef.current;
     if (!el) return;
+    const d = drag.current;
+    d.wheelTarget = el.scrollLeft;
+
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      const d = drag.current;
-      cancelAnimationFrame(d.raf);
-      el.scrollLeft += e.deltaY + e.deltaX;
+      cancelAnimationFrame(d.raf); // stop drag momentum
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      d.wheelTarget = Math.max(0, Math.min(maxScroll, d.wheelTarget + e.deltaY + e.deltaX));
+
+      cancelAnimationFrame(d.wheelRaf);
+      const animate = () => {
+        const diff = d.wheelTarget - el.scrollLeft;
+        if (Math.abs(diff) < 0.5) {
+          el.scrollLeft = d.wheelTarget;
+          return;
+        }
+        el.scrollLeft += diff * 0.12;
+        d.wheelRaf = requestAnimationFrame(animate);
+      };
+      d.wheelRaf = requestAnimationFrame(animate);
     };
+
     el.addEventListener("wheel", onWheel, { passive: false });
-    return () => el.removeEventListener("wheel", onWheel);
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      cancelAnimationFrame(d.wheelRaf);
+    };
   }, [viewMode]);
 
   // Redirect if unauthenticated
