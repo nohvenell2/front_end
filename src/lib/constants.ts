@@ -4,6 +4,10 @@ export const CANDIDATE_LIMIT = parseInt(
   process.env.NEXT_PUBLIC_CANDIDATE_LIMIT ?? "50"
 );
 
+export const MAX_GAME_SELECTION = parseInt(
+  process.env.NEXT_PUBLIC_MAX_GAME_SELECTION ?? "20"
+);
+
 export const DEFAULT_SETTINGS: RecommendationSettings = {
   count: parseInt(process.env.NEXT_PUBLIC_DEFAULT_RECOMMEND_COUNT ?? "10"),
   weights: {
