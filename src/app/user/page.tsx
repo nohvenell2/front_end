@@ -91,39 +91,34 @@ function StatCard({ value, label }: { value: string; label: string }) {
   );
 }
 
-// ── Genre Chart ───────────────────────────────────────────────────────────────
+// ── Distribution Chart ────────────────────────────────────────────────────────
 
-function GenreChart({ games }: { games: SteamGameEnriched[] }) {
-  const data = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const g of games) {
-      for (const genre of g.genres) {
-        counts[genre] = (counts[genre] ?? 0) + 1;
-      }
-    }
-    return Object.entries(counts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8)
-      .map(([name, count]) => ({ name, count }));
-  }, [games]);
-
+function DistributionChart({
+  title,
+  data,
+  barColor,
+}: {
+  title: string;
+  data: { name: string; count: number }[];
+  barColor: string;
+}) {
   if (data.length === 0) return null;
 
   return (
     <div
-      className="rounded-sm p-4"
+      className="flex-1 min-w-0 rounded-sm p-4"
       style={{
         backgroundColor: "var(--color-bg-elevated)",
         border: "1px solid var(--color-border)",
       }}
     >
       <p className="text-xs font-semibold mb-3" style={{ color: "var(--color-text-secondary)" }}>
-        장르 분포
+        {title}
       </p>
-      <ResponsiveContainer width="100%" height={180}>
+      <ResponsiveContainer width="100%" height={280}>
         <BarChart data={data} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 0 }}>
           <XAxis type="number" tick={{ fontSize: 10, fill: "var(--color-text-secondary)" }} axisLine={false} tickLine={false} />
-          <YAxis type="category" dataKey="name" width={80} tick={{ fontSize: 10, fill: "var(--color-text-secondary)" }} axisLine={false} tickLine={false} />
+          <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 10, fill: "var(--color-text-secondary)" }} axisLine={false} tickLine={false} />
           <Tooltip
             contentStyle={{
               backgroundColor: "var(--color-bg-header)",
@@ -134,7 +129,7 @@ function GenreChart({ games }: { games: SteamGameEnriched[] }) {
             }}
             cursor={{ fill: "rgba(103,193,245,0.05)" }}
           />
-          <Bar dataKey="count" fill="var(--color-accent)" radius={2} />
+          <Bar dataKey="count" fill={barColor} radius={2} />
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -267,22 +262,43 @@ export default function UserPage() {
   const stats = useMemo(() => {
     if (!library) return null;
     const totalPlaytime = library.reduce((s, g) => s + g.playtime_forever, 0);
-    const topGenre =
-      enrichedGames.length > 0
-        ? (() => {
-            const counts: Record<string, number> = {};
-            for (const g of enrichedGames)
-              for (const genre of g.genres)
-                counts[genre] = (counts[genre] ?? 0) + 1;
-            return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "-";
-          })()
-        : "-";
-    return {
-      totalGames: library.length,
-      totalPlaytime,
-      topGenre,
+
+    const topOf = (items: string[][]) => {
+      const counts: Record<string, number> = {};
+      for (const list of items)
+        for (const item of list)
+          counts[item] = (counts[item] ?? 0) + 1;
+      return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "-";
     };
+
+    const topGenre = enrichedGames.length > 0 ? topOf(enrichedGames.map((g) => g.genres)) : "-";
+    const topTag   = enrichedGames.length > 0 ? topOf(enrichedGames.map((g) => g.tags))   : "-";
+
+    return { totalGames: library.length, totalPlaytime, topGenre, topTag };
   }, [library, enrichedGames]);
+
+  // Chart data
+  const genreChartData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const g of enrichedGames)
+      for (const genre of g.genres)
+        counts[genre] = (counts[genre] ?? 0) + 1;
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([name, count]) => ({ name, count }));
+  }, [enrichedGames]);
+
+  const tagChartData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const g of enrichedGames)
+      for (const tag of g.tags)
+        counts[tag] = (counts[tag] ?? 0) + 1;
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([name, count]) => ({ name, count }));
+  }, [enrichedGames]);
 
   // Filtered + sorted library
   const filteredGames = useMemo<SteamGame[]>(() => {
@@ -378,32 +394,33 @@ export default function UserPage() {
       <div className="max-w-5xl mx-auto px-6 py-6 flex flex-col gap-6">
         {/* ── Stats Dashboard ── */}
         {libraryLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {Array.from({ length: 4 }).map((_, i) => (
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            {Array.from({ length: 5 }).map((_, i) => (
               <StatCardSkeleton key={i} />
             ))}
           </div>
         ) : libraryError ? null : stats ? (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               <StatCard value={stats.totalGames.toLocaleString()} label="보유 게임" />
               <StatCard value={formatPlaytime(stats.totalPlaytime)} label="총 플레이타임" />
-              <StatCard
-                value={enrichLoading ? "..." : stats.topGenre}
-                label="최다 장르"
-              />
-              <StatCard
-                value={String(selectedIds.size)}
-                label={`선택됨 / ${MAX_GAME_SELECTION}`}
-              />
+              <StatCard value={enrichLoading ? "..." : stats.topGenre} label="최다 장르" />
+              <StatCard value={enrichLoading ? "..." : stats.topTag}   label="최다 태그" />
+              <StatCard value={String(selectedIds.size)} label={`선택됨 / ${MAX_GAME_SELECTION}`} />
             </div>
-            <p className="text-xs" style={{ color: "var(--color-text-dim)" }}>
-              * 장르 정보는 플레이타임 기준 상위 {ENRICH_LIMIT}개 게임 기준
+            <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+              * 장르·태그 정보는 플레이타임 기준 상위 {ENRICH_LIMIT}개 게임 기준
             </p>
             {enrichLoading ? (
-              <SkeletonBlock className="h-52 w-full" />
+              <div className="flex gap-4">
+                <SkeletonBlock className="flex-1 h-72" />
+                <SkeletonBlock className="flex-1 h-72" />
+              </div>
             ) : (
-              <GenreChart games={enrichedGames} />
+              <div className="flex gap-4">
+                <DistributionChart title="장르 분포" data={genreChartData} barColor="var(--color-accent)" />
+                <DistributionChart title="태그 분포" data={tagChartData}  barColor="#8f5fde" />
+              </div>
             )}
           </>
         ) : null}
