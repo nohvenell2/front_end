@@ -1,8 +1,14 @@
+import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 const API_BASE = `http://${process.env.API_HOST}:${process.env.API_PORT}`;
 
 export async function POST(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.steamid) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   const body = await request.json();
 
   const res = await fetch(`${API_BASE}/recommend/user`, {

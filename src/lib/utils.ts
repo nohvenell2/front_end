@@ -9,7 +9,8 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatPlaytime(minutes: number): string {
   if (minutes < 60) return `${minutes} min`;
-  return `${Math.round(minutes / 60)} hour`;
+  const hours = Math.round(minutes / 60);
+  return `${hours} hour${hours !== 1 ? "s" : ""}`;
 }
 
 export function steamHeaderUrl(appid: number): string {

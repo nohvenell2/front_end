@@ -76,7 +76,7 @@ rankGames(candidates: RecommendedGame[], weights, halfLifeDays) → RankedGame[]
 
 Weighted score: similarity + popularity + rating + recency → sorted descending.
 
-`RankedGame.scores` fields: `tfidf` (similarity), `popularity`, `rating`, `recency` — display as "유사도", "인기도", "평점", "최신성". Never expose the raw field name `tfidf` in UI.
+`RankedGame.scores` fields: `tfidf` (similarity), `popularity`, `rating`, `recency` — display as "Similarity", "Popularity", "Rating", "Recency". Never expose the raw field name `tfidf` in UI.
 
 ## Settings (`src/context/settings-context.tsx`)
 
@@ -153,7 +153,7 @@ Test files:
 These decisions were locked in during plan review — do not deviate without discussion:
 
 1. **recharts**: Install with `--legacy-peer-deps`. Wrap in `dynamic(() => import(...), { ssr: false })` — required to avoid SSR crash.
-2. **Radar chart labels**: Use "유사도 / 인기도 / 평점 / 최신성". Never show `tfidf`, `popularity`, `rating`, `recency` raw field names.
+2. **Radar chart labels**: Use "Similarity / Popularity / Rating / Recency". Never show `tfidf`, `popularity`, `rating`, `recency` raw field names.
 3. **?selected join step**: URL contains appids (strings). Parse → convert to numbers → filter `SteamGame[]` from `fetchSteamLibrary()` to reconstruct the full `SteamGame` objects before passing to `fetchUserRecommendation`.
 4. **HYDRATE action**: `settings-context.tsx` hydration from localStorage must use a single `HYDRATE` dispatch (not individual field dispatches) to avoid N writes on mount.
 5. **Stats Dashboard**: Show caption "플레이타임 기준 상위 N개 게임 기준" (where N = `fetchGamesInfo` call size, default 50).

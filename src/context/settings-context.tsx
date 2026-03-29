@@ -79,7 +79,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored) as RecommendationSettings;
-        dispatch({ type: "HYDRATE", payload: { ...DEFAULT_SETTINGS, ...parsed } });
+        dispatch({ type: "HYDRATE", payload: {
+          ...DEFAULT_SETTINGS,
+          ...parsed,
+          weights: { ...DEFAULT_SETTINGS.weights, ...parsed.weights },
+          filters: { ...DEFAULT_SETTINGS.filters, ...parsed.filters },
+        } });
       }
     } catch {
       // Ignore invalid localStorage data

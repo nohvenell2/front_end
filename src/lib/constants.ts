@@ -1,7 +1,7 @@
 import type { RecommendationSettings } from "@/types/settings";
 
 export const CANDIDATE_LIMIT = parseInt(
-  process.env.NEXT_PUBLIC_CANDIDATE_LIMIT ?? "50"
+  process.env.NEXT_PUBLIC_CANDIDATE_LIMIT ?? "100"
 );
 
 export const MAX_GAME_SELECTION = parseInt(

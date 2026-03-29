@@ -5,10 +5,10 @@ interface ScoreProgressBarsProps {
 }
 
 const SCORE_LABELS = [
-  { key: "tfidf" as const,      label: "유사도" },
-  { key: "popularity" as const, label: "인기도" },
-  { key: "rating" as const,     label: "평점" },
-  { key: "recency" as const,    label: "최신성" },
+  { key: "tfidf" as const,      label: "Similarity" },
+  { key: "popularity" as const, label: "Popularity" },
+  { key: "rating" as const,     label: "Rating" },
+  { key: "recency" as const,    label: "Recency" },
 ];
 
 function barColor(pct: number): string {

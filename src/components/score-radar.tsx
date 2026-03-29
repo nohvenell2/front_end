@@ -11,10 +11,10 @@ const PolarAngleAxis = dynamic(() => import("recharts").then((m) => m.PolarAngle
 const ResponsiveContainer = dynamic(() => import("recharts").then((m) => m.ResponsiveContainer), { ssr: false });
 
 const SCORE_AXES = [
-  { key: "tfidf" as const,      label: "유사도" },
-  { key: "popularity" as const, label: "인기도" },
-  { key: "rating" as const,     label: "평점" },
-  { key: "recency" as const,    label: "최신성" },
+  { key: "tfidf" as const,      label: "Similarity" },
+  { key: "popularity" as const, label: "Popularity" },
+  { key: "rating" as const,     label: "Rating" },
+  { key: "recency" as const,    label: "Recency" },
 ];
 
 interface ScoreRadarProps {

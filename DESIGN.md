@@ -100,7 +100,7 @@ WCAG AA contrast verified:
 ## Typography
 
 **Font:** `Noto Sans KR` (Google Fonts)
-**Why:** Korean labels (유사도/인기도/평점/최신성) appear in score visualization on every recommendation card.
+**Why:** English labels (Similarity/Popularity/Rating/Recency) appear in score visualization on every recommendation card.
 
 Load in `src/app/layout.tsx`:
 ```tsx
@@ -211,10 +211,10 @@ page.tsx는 데이터 페칭 + 레이아웃만. 컴포넌트 정의 없음.
 - shadcn `Card` with `shadow-none rounded-sm grid grid-cols-[184px_1fr]`
 - **1위 카드:** `border-primary` (Steam 블루) — 나머지는 `border-border`
 - Image: Steam `header_image` URL via `steamHeaderUrl(appid)` utility
-- Score visualization: recharts `RadarChart` (4 축: 유사도/인기도/평점/최신성)
+- Score visualization: recharts `RadarChart` (4 axes: Similarity/Popularity/Rating/Recency)
   - dynamic import with `{ ssr: false }` (SSR crash 방지)
   - 레이더 색상: `fill: #67c1f5`, `fillOpacity: 0.2`, `stroke: #67c1f5`
-  - 축 레이블: 한국어 (유사도/인기도/평점/최신성) — raw field name 절대 노출 금지
+  - 축 레이블: English (Similarity/Popularity/Rating/Recency) — raw field name 절대 노출 금지
 
 ### Empty State Pattern
 Every empty state requires:
@@ -283,6 +283,6 @@ Every empty state requires:
 6. **shadcn CSS variables:** `globals.css`에 shadcn HSL layer를 Steam hex token 위에 추가. 두 시스템 공존.
 7. **shadcn 기본값 오버라이드:** 모든 Card는 `shadow-none rounded-sm` 필수. `rounded-lg` 사용 금지.
 8. **CTA Button:** shadcn `Button`에 `variant="cta"` 커스텀 추가 (`bg-[#5c7e10] text-[#d4e157]`). 변경 금지.
-9. **Score visualization:** recharts `RadarChart` — dynamic import `{ ssr: false }`. 4 axes: 유사도/인기도/평점/최신성. raw field name 노출 금지.
+9. **Score visualization:** recharts `RadarChart` — dynamic import `{ ssr: false }`. 4 axes: Similarity/Popularity/Rating/Recency. raw field name 노출 금지.
 10. **1위 추천 카드:** `border-primary` (Steam 블루). 나머지는 `border-border`.
 11. **Stats hierarchy:** Stats 카드 레이블은 `text-muted-foreground`. CTA가 page primary action.

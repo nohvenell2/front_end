@@ -254,6 +254,11 @@ export default function UserPage() {
     );
   }, [enrichedGames, gamesInfo]);
 
+  const libraryMap = useMemo(
+    () => new Map(library?.map((g) => [g.appid, g]) ?? []),
+    [library],
+  );
+
   const zeroPlaytimeCount = useMemo(
     () => library?.filter((g) => g.playtime_forever === 0).length ?? 0,
     [library],
@@ -414,7 +419,7 @@ export default function UserPage() {
           {selectedIds.size > 0 && library && (
             <div className="flex flex-wrap gap-2 px-4 py-2 bg-card border-b border-border">
               {[...selectedIds].map((id) => {
-                const g = library.find((g) => g.appid === id);
+                const g = libraryMap.get(id);
                 if (!g) return null;
                 return (
                   <button
