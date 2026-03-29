@@ -46,22 +46,23 @@ function DistributionChart({
   return (
     <Card className="flex-1 min-w-0 rounded-sm shadow-none">
       <CardContent className="p-4">
-        <p className="text-xs font-semibold mb-3 uppercase tracking-wide text-muted-foreground">
+        <p className="text-sm font-semibold mb-3 uppercase tracking-wide text-muted-foreground">
           {title}
         </p>
         <ResponsiveContainer width="100%" height={320}>
           <BarChart data={data} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 0 }}>
-            <XAxis type="number" tick={{ fontSize: 10, fill: "var(--color-text-secondary)" }} axisLine={false} tickLine={false} />
-            <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 10, fill: "var(--color-text-secondary)" }} axisLine={false} tickLine={false} />
+            <XAxis type="number" tick={{ fontSize: 13, fill: "var(--color-text-secondary)" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${Math.round(v / 60)}h`} />
+            <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 13, fill: "var(--color-text-secondary)" }} axisLine={false} tickLine={false} />
             <Tooltip
               contentStyle={{
                 backgroundColor: "var(--color-bg-header)",
                 border: "1px solid var(--color-steam-border)",
                 borderRadius: 3,
-                fontSize: 11,
+                fontSize: 14,
                 color: "var(--color-text-primary)",
               }}
               cursor={{ fill: "rgba(103,193,245,0.05)" }}
+              formatter={(value: number) => [formatPlaytime(value), "Playtime"]}
             />
             <Bar dataKey="count" fill={barColor} radius={2} />
           </BarChart>
@@ -209,32 +210,36 @@ export default function UserPage() {
   const stats = useMemo(() => {
     if (!library) return null;
     const totalPlaytime = library.reduce((s, g) => s + g.playtime_forever, 0);
-    const topOf = (items: string[][]) => {
-      const counts: Record<string, number> = {};
-      for (const list of items)
+    const topOfWeighted = (items: { list: string[]; playtime: number }[]) => {
+      const totals: Record<string, number> = {};
+      for (const { list, playtime } of items)
         for (const item of list)
-          counts[item] = (counts[item] ?? 0) + 1;
-      return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "-";
+          totals[item] = (totals[item] ?? 0) + playtime;
+      return Object.entries(totals).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "-";
     };
-    const topGenre = enrichedGames.length > 0 ? topOf(enrichedGames.map((g) => g.genres)) : "-";
-    const topTag   = enrichedGames.length > 0 ? topOf(enrichedGames.map((g) => g.tags))   : "-";
+    const topGenre = enrichedGames.length > 0
+      ? topOfWeighted(enrichedGames.map((g) => ({ list: g.genres, playtime: g.playtime_forever })))
+      : "-";
+    const topTag = enrichedGames.length > 0
+      ? topOfWeighted(enrichedGames.map((g) => ({ list: g.tags, playtime: g.playtime_forever })))
+      : "-";
     return { totalGames: library.length, totalPlaytime, topGenre, topTag };
   }, [library, enrichedGames]);
 
   const genreChartData = useMemo(() => {
-    const counts: Record<string, number> = {};
+    const totals: Record<string, number> = {};
     for (const g of enrichedGames)
       for (const genre of g.genres)
-        counts[genre] = (counts[genre] ?? 0) + 1;
-    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([name, count]) => ({ name, count }));
+        totals[genre] = (totals[genre] ?? 0) + g.playtime_forever;
+    return Object.entries(totals).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([name, count]) => ({ name, count }));
   }, [enrichedGames]);
 
   const tagChartData = useMemo(() => {
-    const counts: Record<string, number> = {};
+    const totals: Record<string, number> = {};
     for (const g of enrichedGames)
       for (const tag of g.tags)
-        counts[tag] = (counts[tag] ?? 0) + 1;
-    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([name, count]) => ({ name, count }));
+        totals[tag] = (totals[tag] ?? 0) + g.playtime_forever;
+    return Object.entries(totals).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([name, count]) => ({ name, count }));
   }, [enrichedGames]);
 
   const enrichedMap = useMemo(() => {
