@@ -11,9 +11,12 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json();
 
+  const apiHeaders: Record<string, string> = { "Content-Type": "application/json" };
+  if (process.env.API_KEY) apiHeaders["X-API-Key"] = process.env.API_KEY;
+
   const res = await fetch(`${API_BASE}/games/info`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: apiHeaders,
     body: JSON.stringify(body),
   });
 
