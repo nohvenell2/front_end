@@ -89,7 +89,7 @@ export function RecommendCard({ game, rank }: RecommendCardProps) {
               </p>
             )}
           </div>
-          <div className="flex flex-col items-center justify-center shrink-0 w-16 h-16 rounded-md bg-primary/20 border border-primary/30">
+          <div className="flex flex-col items-center justify-center shrink-0 w-16 h-16 rounded-sm bg-primary/20 border border-primary/30">
             <span className="text-4xl font-bold text-primary tabular-nums leading-none">
               {Math.round(game.finalScore * 100)}
             </span>
@@ -145,7 +145,7 @@ export function RecommendCard({ game, rank }: RecommendCardProps) {
             <div className="flex gap-1">
               <button
                 className={cn(
-                  "text-sm px-2 py-0.5 rounded transition-colors",
+                  "text-sm px-2 py-0.5 rounded-sm transition-colors",
                   chartMode === "radar"
                     ? "bg-primary text-primary-foreground"
                     : "hover:bg-muted text-muted-foreground"
@@ -156,7 +156,7 @@ export function RecommendCard({ game, rank }: RecommendCardProps) {
               </button>
               <button
                 className={cn(
-                  "text-sm px-2 py-0.5 rounded transition-colors",
+                  "text-sm px-2 py-0.5 rounded-sm transition-colors",
                   chartMode === "bars"
                     ? "bg-primary text-primary-foreground"
                     : "hover:bg-muted text-muted-foreground"
