@@ -8,8 +8,8 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatPlaytime(minutes: number): string {
-  if (minutes < 60) return `${minutes}m`;
-  return `${Math.round(minutes / 60)}h`;
+  if (minutes < 60) return `${minutes} min`;
+  return `${Math.round(minutes / 60)} hour`;
 }
 
 export function steamHeaderUrl(appid: number): string {

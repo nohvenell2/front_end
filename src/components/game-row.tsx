@@ -17,7 +17,7 @@ export function GameRow({ game, headerImage, genres, selected, onToggle, disable
   return (
     <label
       className={cn(
-        "relative flex items-center gap-3 px-4 min-h-[56px] w-full cursor-pointer select-none transition-colors rounded-sm",
+        "relative flex items-center gap-3 px-4 py-3 min-h-[56px] w-full cursor-pointer select-none transition-colors rounded-sm",
         selected
           ? "bg-accent/10 border border-accent"
           : "bg-card border border-border hover:border-accent/50",
@@ -49,7 +49,7 @@ export function GameRow({ game, headerImage, genres, selected, onToggle, disable
         <span className="text-sm font-semibold text-foreground truncate">
           {game.name}
         </span>
-        <span className="flex items-center gap-1 text-sm text-muted-foreground">
+        <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
           <Clock className="w-3.5 h-3.5 shrink-0" />
           {formatPlaytime(game.playtime_forever)}
         </span>
