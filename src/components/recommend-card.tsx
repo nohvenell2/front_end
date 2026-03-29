@@ -32,7 +32,7 @@ export function RecommendCard({ game, rank }: RecommendCardProps) {
           sizes="184px"
         />
         {isTop && (
-          <span className="absolute top-1.5 left-1.5 text-[10px] font-bold bg-primary text-primary-foreground px-1.5 py-0.5 rounded-sm">
+          <span className="absolute top-1.5 left-1.5 text-[12px] font-bold bg-primary text-primary-foreground px-1.5 py-0.5 rounded-sm">
             #1
           </span>
         )}
@@ -58,7 +58,7 @@ export function RecommendCard({ game, rank }: RecommendCardProps) {
           </div>
 
           {/* Meta */}
-          <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
+          <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-[13px] text-muted-foreground">
             {game.developer && <span>{game.developer}</span>}
             {game.release_date_original && <span>{game.release_date_original}</span>}
             {game.all_reviews && <span>{game.all_reviews}</span>}
@@ -68,7 +68,7 @@ export function RecommendCard({ game, rank }: RecommendCardProps) {
           {game.genres.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-0.5">
               {game.genres.slice(0, 4).map((g) => (
-                <Badge key={g} variant="secondary" className="text-[10px] px-1.5 py-0 rounded-sm h-4">
+                <Badge key={g} variant="secondary" className="text-[12px] px-1.5 py-0 rounded-sm h-4">
                   {g}
                 </Badge>
               ))}

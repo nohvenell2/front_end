@@ -1,16 +1,18 @@
 import { cn } from "@/lib/utils";
 import { formatPlaytime, steamHeaderUrl } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import type { SteamGame } from "@/types/steam";
 
 interface GameRowProps {
   game: SteamGame;
   headerImage?: string;
+  genres: string[];
   selected: boolean;
   onToggle: (appid: number) => void;
   disabled: boolean;
 }
 
-export function GameRow({ game, headerImage, selected, onToggle, disabled }: GameRowProps) {
+export function GameRow({ game, headerImage, genres, selected, onToggle, disabled }: GameRowProps) {
   return (
     <label
       className={cn(
@@ -27,7 +29,7 @@ export function GameRow({ game, headerImage, selected, onToggle, disabled }: Gam
         disabled={disabled && !selected}
         onChange={() => onToggle(game.appid)}
         className="sr-only"
-        aria-label={`${game.name} 선택`}
+        aria-label={`Select ${game.name}`}
       />
 
       {/* Thumbnail */}
@@ -41,15 +43,26 @@ export function GameRow({ game, headerImage, selected, onToggle, disabled }: Gam
         />
       </div>
 
-      {/* Name */}
-      <span className="flex-1 min-w-0 text-sm text-foreground truncate">
-        {game.name}
-      </span>
+      {/* Title + Playtime */}
+      <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+        <span className="text-sm font-semibold text-foreground truncate">
+          {game.name}
+        </span>
+        <span className="text-xs text-muted-foreground">
+          {formatPlaytime(game.playtime_forever)}
+        </span>
+      </div>
 
-      {/* Playtime */}
-      <span className="shrink-0 text-xs text-muted-foreground">
-        {formatPlaytime(game.playtime_forever)}
-      </span>
+      {/* Genres */}
+      {genres.length > 0 && (
+        <div className="hidden sm:flex flex-wrap justify-end gap-1 shrink-0 max-w-[240px]">
+          {genres.slice(0, 5).map((g) => (
+            <Badge key={g} variant="secondary" className="text-[12px] px-1.5 py-0 rounded-sm h-4">
+              {g}
+            </Badge>
+          ))}
+        </div>
+      )}
 
       {/* Check overlay */}
       {selected && (
@@ -65,8 +78,14 @@ export function GameRowSkeleton() {
   return (
     <div className="flex items-center gap-3 px-4 min-h-[56px] rounded-sm border border-border bg-card">
       <div className="w-20 h-[47px] rounded-sm bg-muted animate-pulse shrink-0" />
-      <div className="flex-1 h-3 rounded-sm bg-muted animate-pulse" />
-      <div className="w-10 h-3 rounded-sm bg-muted animate-pulse shrink-0" />
+      <div className="flex flex-col gap-1 flex-1">
+        <div className="h-3 rounded-sm bg-muted animate-pulse" />
+        <div className="h-2 w-12 rounded-sm bg-muted animate-pulse" />
+      </div>
+      <div className="hidden sm:flex gap-1 shrink-0">
+        <div className="w-12 h-4 rounded-sm bg-muted animate-pulse" />
+        <div className="w-14 h-4 rounded-sm bg-muted animate-pulse" />
+      </div>
     </div>
   );
 }

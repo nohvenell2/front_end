@@ -90,8 +90,8 @@ function RecommendInner() {
   );
 
   const navTitle = selectedAppids.length > 0
-    ? `${selectedAppids.length}개 게임 기반 추천`
-    : "전체 라이브러리 기반 추천";
+    ? `Recommendations based on ${selectedAppids.length} games`
+    : "Recommendations based on full library";
 
   const navRight = (
     <>
@@ -100,7 +100,7 @@ function RecommendInner() {
       )}
       {/* Mobile settings trigger */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetTrigger render={<Button variant="outline" size="sm" className="lg:hidden" aria-label="설정 열기">⚙ Settings</Button>} />
+        <SheetTrigger render={<Button variant="outline" size="sm" className="lg:hidden" aria-label="Open settings">⚙ Settings</Button>} />
         <SheetContent side="bottom" className="max-h-[70vh] overflow-y-auto bg-popover border-border p-0">
           <SettingsPanel onApply={() => setSheetOpen(false)} />
         </SheetContent>
@@ -143,30 +143,30 @@ function RecommendInner() {
             <Card className="rounded-sm shadow-none border-destructive">
               <CardContent className="flex flex-col items-center gap-3 py-16 text-center p-8">
                 <span className="text-3xl">⚠️</span>
-                <p className="text-sm font-semibold text-destructive">추천을 불러올 수 없습니다</p>
+                <p className="text-sm font-semibold text-destructive">Failed to load recommendations</p>
                 <p className="text-xs text-muted-foreground">
-                  서버 오류이거나 라이브러리를 읽을 수 없는 상태입니다.
+                  Server error or library could not be read.
                 </p>
                 <Button variant="outline" size="sm" className="mt-1 border-destructive text-destructive" onClick={() => window.location.reload()}>
-                  다시 시도
+                  Retry
                 </Button>
               </CardContent>
             </Card>
           ) : rankedGames.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-16 text-center">
               <span className="text-3xl">🎮</span>
-              <p className="text-sm font-semibold text-foreground">추천 결과 없음</p>
+              <p className="text-sm font-semibold text-foreground">No recommendations found</p>
               <p className="text-xs text-muted-foreground">
-                필터 조건을 완화하거나 다른 게임을 선택해 보세요.
+                Try relaxing your filters or selecting different games.
               </p>
               <Button variant="cta" size="sm" className="mt-1" onClick={() => router.push("/user")}>
-                게임 선택하기
+                Select games
               </Button>
             </div>
           ) : (
             <div className="flex flex-col gap-4">
               <p className="text-xs text-muted-foreground">
-                Top {rankedGames.length}개 추천 · 가중치 변경 시 즉시 재랭킹
+                Top {rankedGames.length} recommendations · re-ranked instantly on weight change
               </p>
               {rankedGames.map((game, i) => (
                 <RecommendCard key={game.game_id} game={game} rank={i + 1} />

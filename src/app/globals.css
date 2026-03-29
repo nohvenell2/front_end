@@ -30,8 +30,8 @@
   --popover-foreground:     oklch(0.87 0.019 220);   /* #c7d5e0 */
   --primary:                oklch(0.75 0.100 214);   /* #67c1f5 Steam blue */
   --primary-foreground:     oklch(0.10 0.012 250);   /* dark bg on blue */
-  --secondary:              oklch(0.15 0.014 245);   /* #171a21 muted surface */
-  --secondary-foreground:   oklch(0.65 0.012 220);   /* #8f98a0 */
+  --secondary:              oklch(0.26 0.06 230);    /* #1d3048 steam blue tag bg */
+  --secondary-foreground:   oklch(0.75 0.025 215);   /* #9ec4d8 */
   --muted:                  oklch(0.15 0.014 245);   /* #171a21 */
   --muted-foreground:       oklch(0.65 0.012 220);   /* #8f98a0 */
   --accent:                 oklch(0.50 0.068 222);   /* #417a9b border-active */
@@ -136,6 +136,7 @@
   }
   html {
     @apply font-sans;
+    font-size: 112.5%; /* 18px base — scales all rem-based text sizes */
   }
 }
 

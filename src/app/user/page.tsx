@@ -111,7 +111,7 @@ function GameCard({
         disabled={disabled && !selected}
         onChange={() => onToggle(game.appid)}
         className="sr-only"
-        aria-label={`${game.name} 선택`}
+        aria-label={`Select ${game.name}`}
       />
       <div className="relative w-full" style={{ paddingTop: "46.7%" }}>
         {imgError ? (
@@ -147,7 +147,7 @@ function GameCard({
         {genres.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-0.5">
             {genres.slice(0, 5).map((g) => (
-              <Badge key={g} variant="secondary" className="text-[10px] px-1 py-0 rounded-sm h-4">
+              <Badge key={g} variant="secondary" className="text-[12px] px-1 py-0 rounded-sm h-4">
                 {g}
               </Badge>
             ))}
@@ -168,7 +168,12 @@ export default function UserPage() {
   const [sort, setSort] = useState<"playtime" | "name">("playtime");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [chartsOpen, setChartsOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<"grid" | "list" | "scroll">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "scroll">(() => {
+    if (typeof window === "undefined") return "grid";
+    const saved = localStorage.getItem("userPageViewMode");
+    return (saved === "grid" || saved === "list" || saved === "scroll") ? saved : "grid";
+  });
+  const [hideZeroPlaytime, setHideZeroPlaytime] = useState(true);
 
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/");
@@ -241,9 +246,14 @@ export default function UserPage() {
     );
   }, [enrichedGames, gamesInfo]);
 
+  const zeroPlaytimeCount = useMemo(
+    () => library?.filter((g) => g.playtime_forever === 0).length ?? 0,
+    [library],
+  );
+
   const filteredGames = useMemo<SteamGame[]>(() => {
     if (!library) return [];
-    let games = library;
+    let games = hideZeroPlaytime ? library.filter((g) => g.playtime_forever > 0) : library;
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       games = games.filter((g) => g.name.toLowerCase().includes(q));
@@ -251,7 +261,7 @@ export default function UserPage() {
     return sort === "playtime"
       ? [...games].sort((a, b) => b.playtime_forever - a.playtime_forever)
       : [...games].sort((a, b) => a.name.localeCompare(b.name));
-  }, [library, search, sort]);
+  }, [library, search, sort, hideZeroPlaytime]);
 
   const toggleSelect = useCallback((appid: number) => {
     setSelectedIds((prev) => {
@@ -306,7 +316,7 @@ export default function UserPage() {
                 {chartsOpen ? "▲" : "▼"} Genre / Tag Chart
               </Button>
               <span className="text-xs text-muted-foreground">
-                * 플레이타임 기준 상위 {ENRICH_LIMIT}개 게임 기준
+                * Based on top {ENRICH_LIMIT} games by playtime
               </span>
             </div>
             {chartsOpen && (
@@ -342,14 +352,14 @@ export default function UserPage() {
               {(["grid", "list", "scroll"] as const).map((mode) => (
                 <button
                   key={mode}
-                  onClick={() => setViewMode(mode)}
+                  onClick={() => { setViewMode(mode); localStorage.setItem("userPageViewMode", mode); }}
                   className={[
                     "px-2.5 py-1.5 text-xs transition-colors",
                     viewMode === mode
                       ? "bg-accent text-white"
                       : "bg-background text-muted-foreground hover:text-foreground",
                   ].join(" ")}
-                  aria-label={mode === "grid" ? "그리드 보기" : mode === "list" ? "목록 보기" : "카드 슬라이드 보기"}
+                  aria-label={mode === "grid" ? "Grid view" : mode === "list" ? "List view" : "Card scroll view"}
                 >
                   {mode === "grid" ? "⊞" : mode === "list" ? "☰" : "⇔"}
                 </button>
@@ -367,10 +377,29 @@ export default function UserPage() {
 
             <Button variant="cta" size="sm" className="ml-auto" onClick={handleRecommend}>
               {selectedIds.size > 0
-                ? `${selectedIds.size}개 게임으로 추천`
-                : "전체 라이브러리로 추천"}
+                ? `Recommend from ${selectedIds.size} games`
+                : "Recommend from full library"}
             </Button>
           </div>
+
+          {/* Zero-playtime info bar */}
+          {!libraryLoading && zeroPlaytimeCount > 0 && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-card border-b border-border text-xs text-muted-foreground">
+              <span className="text-amber-400 shrink-0">⚠</span>
+              <span className="flex-1">
+                {hideZeroPlaytime
+                  ? <><strong className="text-foreground">{zeroPlaytimeCount} unplayed game{zeroPlaytimeCount !== 1 ? "s" : ""}</strong> hidden — unplayed games provide no signal and are excluded from recommendations.</>
+                  : <><strong className="text-foreground">{zeroPlaytimeCount} unplayed game{zeroPlaytimeCount !== 1 ? "s" : ""}</strong> shown — these have no playtime data and will not affect recommendations.</>
+                }
+              </span>
+              <button
+                onClick={() => setHideZeroPlaytime((v) => !v)}
+                className="shrink-0 px-2 py-0.5 rounded-sm border border-border hover:border-accent/60 hover:text-foreground transition-colors"
+              >
+                {hideZeroPlaytime ? "Show" : "Hide"}
+              </button>
+            </div>
+          )}
 
           {/* Selected chips */}
           {selectedIds.size > 0 && library && (
@@ -414,21 +443,21 @@ export default function UserPage() {
           ) : libraryError ? (
             <div className="flex flex-col items-center gap-3 py-12 px-6 text-center bg-destructive/5 border-destructive/30">
               <span className="text-3xl">⚠️</span>
-              <p className="text-sm font-semibold text-destructive">라이브러리를 불러올 수 없습니다</p>
+              <p className="text-sm font-semibold text-destructive">Failed to load library</p>
               <p className="text-xs text-muted-foreground">
-                Steam 프로필이 공개 상태인지 확인하거나 잠시 후 다시 시도해 주세요.
+                Make sure your Steam profile is set to public, then try again.
               </p>
               <Button variant="outline" size="sm" className="mt-1 border-destructive text-destructive" onClick={() => window.location.reload()}>
-                다시 시도
+                Retry
               </Button>
             </div>
           ) : filteredGames.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-12 text-center">
               <span className="text-3xl">🔍</span>
-              <p className="text-sm font-semibold text-foreground">검색 결과 없음</p>
-              <p className="text-xs text-muted-foreground">다른 검색어를 입력해 보세요.</p>
+              <p className="text-sm font-semibold text-foreground">No results</p>
+              <p className="text-xs text-muted-foreground">Try a different search term.</p>
               <Button variant="outline" size="sm" className="mt-1" onClick={() => setSearch("")}>
-                검색 초기화
+                Clear search
               </Button>
             </div>
           ) : viewMode === "grid" ? (
@@ -436,7 +465,7 @@ export default function UserPage() {
               className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4 overflow-y-auto"
               style={{ maxHeight: "65vh" }}
               role="list"
-              aria-label="게임 라이브러리"
+              aria-label="Game library"
             >
               {filteredGames.map((game, i) => (
                 <div key={game.appid} role="listitem">
@@ -457,13 +486,14 @@ export default function UserPage() {
               className="flex flex-col gap-2 p-3 overflow-y-auto"
               style={{ maxHeight: "65vh" }}
               role="list"
-              aria-label="게임 라이브러리"
+              aria-label="Game library"
             >
               {filteredGames.map((game) => (
                 <GameRow
                   key={game.appid}
                   game={game}
                   headerImage={enrichedMap.get(game.appid)?.headerImage}
+                  genres={enrichedMap.get(game.appid)?.genres ?? []}
                   selected={selectedIds.has(game.appid)}
                   onToggle={toggleSelect}
                   disabled={selectedIds.size >= MAX_GAME_SELECTION}
@@ -471,7 +501,7 @@ export default function UserPage() {
               ))}
             </div>
           ) : (
-            <div className="p-4 h-[420px]" role="list" aria-label="게임 라이브러리">
+            <div className="h-[480px] py-4" role="list" aria-label="Game library">
               <GameCarousel
                 games={filteredGames}
                 enrichedMap={enrichedMap}
@@ -485,7 +515,7 @@ export default function UserPage() {
           {/* Selection cap hint */}
           {selectedIds.size >= MAX_GAME_SELECTION && (
             <div className="px-4 py-2 text-xs text-center text-muted-foreground bg-card border-t border-border">
-              최대 {MAX_GAME_SELECTION}개 게임까지 선택할 수 있습니다.
+              You can select up to {MAX_GAME_SELECTION} games.
             </div>
           )}
         </Card>

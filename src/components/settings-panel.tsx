@@ -8,10 +8,10 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 
 const WEIGHT_LABELS: Record<string, string> = {
-  similarity: "유사도",
-  popularity: "인기도",
-  rating: "평점",
-  recency: "최신성",
+  similarity: "Similarity",
+  popularity: "Popularity",
+  rating: "Rating",
+  recency: "Recency",
 };
 
 interface SettingsPanelProps {
@@ -26,7 +26,7 @@ export function SettingsPanel({ onApply }: SettingsPanelProps) {
       {/* Count */}
       <div className="flex flex-col gap-3">
         <div className="flex justify-between items-center">
-          <Label className="text-xs text-muted-foreground font-semibold">추천 수</Label>
+          <Label className="text-xs text-muted-foreground font-semibold">Result Count</Label>
           <span className="text-xs font-semibold text-primary">{settings.count}</span>
         </div>
         <Slider
@@ -36,7 +36,7 @@ export function SettingsPanel({ onApply }: SettingsPanelProps) {
           value={[settings.count]}
           onValueChange={(v) => dispatch({ type: "SET_COUNT", payload: (v as number[])[0] })}
         />
-        <div className="flex justify-between text-[10px] text-muted-foreground/60">
+        <div className="flex justify-between text-[12px] text-muted-foreground/60">
           <span>5</span><span>20</span>
         </div>
       </div>
@@ -45,7 +45,7 @@ export function SettingsPanel({ onApply }: SettingsPanelProps) {
 
       {/* Weights */}
       <div className="flex flex-col gap-4">
-        <Label className="text-xs text-muted-foreground font-semibold">가중치</Label>
+        <Label className="text-xs text-muted-foreground font-semibold">Weights</Label>
         {(["similarity", "popularity", "rating", "recency"] as const).map((key) => (
           <div key={key} className="flex flex-col gap-2">
             <div className="flex justify-between items-center">
@@ -70,8 +70,8 @@ export function SettingsPanel({ onApply }: SettingsPanelProps) {
       {/* Half-life */}
       <div className="flex flex-col gap-3">
         <div className="flex justify-between items-center">
-          <Label className="text-xs text-muted-foreground font-semibold">최신성 반감기</Label>
-          <span className="text-xs text-primary">{settings.halfLifeDays}일</span>
+          <Label className="text-xs text-muted-foreground font-semibold">Recency Half-life</Label>
+          <span className="text-xs text-primary">{settings.halfLifeDays} days</span>
         </div>
         <Slider
           min={180}
@@ -80,8 +80,8 @@ export function SettingsPanel({ onApply }: SettingsPanelProps) {
           value={[settings.halfLifeDays]}
           onValueChange={(v) => dispatch({ type: "SET_HALF_LIFE_DAYS", payload: (v as number[])[0] })}
         />
-        <div className="flex justify-between text-[10px] text-muted-foreground/60">
-          <span>180일</span><span>3650일</span>
+        <div className="flex justify-between text-[12px] text-muted-foreground/60">
+          <span>180d</span><span>3650d</span>
         </div>
       </div>
 
@@ -89,10 +89,10 @@ export function SettingsPanel({ onApply }: SettingsPanelProps) {
 
       {/* Filters */}
       <div className="flex flex-col gap-4">
-        <Label className="text-xs text-muted-foreground font-semibold">필터</Label>
+        <Label className="text-xs text-muted-foreground font-semibold">Filters</Label>
 
         <div className="flex flex-col gap-1.5">
-          <Label className="text-xs text-muted-foreground">출시일 이후</Label>
+          <Label className="text-xs text-muted-foreground">Released After</Label>
           <Input
             type="date"
             value={settings.filters.minReleaseDate}
@@ -106,7 +106,7 @@ export function SettingsPanel({ onApply }: SettingsPanelProps) {
 
         <div className="flex flex-col gap-1.5">
           <div className="flex justify-between items-center">
-            <Label className="text-xs text-muted-foreground">최소 리뷰 수</Label>
+            <Label className="text-xs text-muted-foreground">Min Reviews</Label>
             <span className="text-xs text-primary">{settings.filters.minReviewCount.toLocaleString()}</span>
           </div>
           <Input
@@ -122,7 +122,7 @@ export function SettingsPanel({ onApply }: SettingsPanelProps) {
 
         <div className="flex flex-col gap-2">
           <div className="flex justify-between items-center">
-            <Label className="text-xs text-muted-foreground">긍정 비율 최소</Label>
+            <Label className="text-xs text-muted-foreground">Min Positive %</Label>
             <span className="text-xs text-primary">{settings.filters.minPositivePercent}%</span>
           </div>
           <Slider
@@ -134,7 +134,7 @@ export function SettingsPanel({ onApply }: SettingsPanelProps) {
               dispatch({ type: "SET_FILTER", payload: { key: "minPositivePercent", value: (v as number[])[0] } })
             }
           />
-          <div className="flex justify-between text-[10px] text-muted-foreground/60">
+          <div className="flex justify-between text-[12px] text-muted-foreground/60">
             <span>0%</span><span>100%</span>
           </div>
         </div>
@@ -148,7 +148,7 @@ export function SettingsPanel({ onApply }: SettingsPanelProps) {
           className="flex-1"
           onClick={() => dispatch({ type: "RESET_DEFAULTS" })}
         >
-          초기화
+          Reset
         </Button>
         {onApply && (
           <Button
@@ -157,7 +157,7 @@ export function SettingsPanel({ onApply }: SettingsPanelProps) {
             className="flex-1"
             onClick={onApply}
           >
-            적용
+            Apply
           </Button>
         )}
       </div>
