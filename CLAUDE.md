@@ -13,7 +13,7 @@ Available skills: /office-hours, /plan-ceo-review, /plan-eng-review, /plan-desig
 
 Steam Game Recommender frontend — Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4.
 
-API routes, auth, types, utilities, state management are all implemented. **UI pages and components are being built on the `skeleton` branch.**
+All pages, components, API routes, auth, types, utilities, and state management are implemented. UI uses shadcn/ui with Steam dark theme.
 
 For full API/type/function reference, see [dev_docs/FULL-REFERENCE.md](dev_docs/FULL-REFERENCE.md).
 
