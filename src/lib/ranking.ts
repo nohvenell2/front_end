@@ -33,10 +33,11 @@ export function rankGames(
           ? Math.log(1 + game.total_review_count) /
             Math.log(1 + maxReviews)
           : 0;
-      const sRate = game.total_review_positive_percent / 100;
-      const daysSinceRelease =
-        (now - new Date(game.release_date).getTime()) /
-        (1000 * 60 * 60 * 24);
+      const sRate = Math.min(1, Math.max(0, game.total_review_positive_percent / 100));
+      const releaseMs = new Date(game.release_date).getTime();
+      const daysSinceRelease = isNaN(releaseMs)
+        ? 0
+        : (now - releaseMs) / (1000 * 60 * 60 * 24);
       const sTime = Math.exp(-lambda * Math.max(0, daysSinceRelease));
 
       const finalScore =

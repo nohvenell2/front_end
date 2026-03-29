@@ -90,4 +90,20 @@ describe('rankGames', () => {
     const result = rankGames([game], weights, 365)
     expect(result[0].scores.rating).toBeCloseTo(0.8)
   })
+
+  it('clamps rating score to [0,1] for out-of-range percent', () => {
+    const over: RecommendedGame = { ...baseGame, total_review_positive_percent: 150 }
+    const under: RecommendedGame = { ...baseGame, game_id: 2, total_review_positive_percent: -10 }
+    const [r1] = rankGames([over], weights, 365)
+    const [r2] = rankGames([under], weights, 365)
+    expect(r1.scores.rating).toBeLessThanOrEqual(1)
+    expect(r2.scores.rating).toBeGreaterThanOrEqual(0)
+  })
+
+  it('handles invalid release_date without NaN in finalScore', () => {
+    const badDate: RecommendedGame = { ...baseGame, release_date: 'not-a-date' }
+    const result = rankGames([badDate], weights, 365)
+    expect(result[0].finalScore).not.toBeNaN()
+    expect(result[0].scores.recency).toBe(1.0) // treats as today (0 days ago)
+  })
 })

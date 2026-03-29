@@ -19,6 +19,16 @@ function formatReview(text: string): string {
   return text.replace(/overwhelmingly positive/i, "Overwhelmingly +");
 }
 
+function safeSteamUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === "https:" || parsed.protocol === "http:") return url;
+  } catch {
+    // fall through
+  }
+  return `https://store.steampowered.com`;
+}
+
 function reviewColor(percent: number): string {
   if (percent >= 80) return "text-green-400";
   if (percent >= 70) return "text-blue-400";
@@ -48,7 +58,7 @@ export function RecommendCard({ game, rank }: RecommendCardProps) {
       )}
     >
       {/* Header image */}
-      <a href={game.url} target="_blank" rel="noopener noreferrer" className="relative w-full block" style={{ aspectRatio: "460/215" }}>
+      <a href={safeSteamUrl(game.url)} target="_blank" rel="noopener noreferrer" className="relative w-full block" style={{ aspectRatio: "460/215" }}>
         <Image
           src={game.header_image}
           alt={game.title}
@@ -73,7 +83,7 @@ export function RecommendCard({ game, rank }: RecommendCardProps) {
         <div className="flex flex-row gap-3 items-center">
           <div className="flex flex-col gap-1.5 flex-1 min-w-0">
             <a
-              href={game.url}
+              href={safeSteamUrl(game.url)}
               target="_blank"
               rel="noopener noreferrer"
               className="text-base font-bold leading-snug hover:underline text-primary line-clamp-2"

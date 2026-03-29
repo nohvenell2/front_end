@@ -17,11 +17,12 @@ export async function POST(request: NextRequest) {
     body: JSON.stringify(body),
   });
 
-  const data = await res.json();
-
   if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    const data = text ? JSON.parse(text) : { message: `Backend error ${res.status}` };
     return NextResponse.json(data, { status: res.status });
   }
 
+  const data = await res.json();
   return NextResponse.json(data);
 }

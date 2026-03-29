@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchSteamLibrary, fetchUserRecommendation } from "@/lib/api-client";
 import { rankGames } from "@/lib/ranking";
 import { useSettings } from "@/context/settings-context";
-import { CANDIDATE_LIMIT } from "@/lib/constants";
+import { CANDIDATE_LIMIT, MAX_GAME_SELECTION } from "@/lib/constants";
 import type { RankedGame } from "@/types/recommend";
 
 import { Settings2 } from "lucide-react";
@@ -34,7 +34,7 @@ function RecommendInner() {
   const selectedAppids = useMemo<number[]>(() => {
     const raw = searchParams.get("selected");
     if (!raw) return [];
-    return raw.split(",").map(Number).filter((n) => !isNaN(n) && n > 0);
+    return raw.split(",").map(Number).filter((n) => !isNaN(n) && n > 0).slice(0, MAX_GAME_SELECTION);
   }, [searchParams]);
 
   const { data: library } = useQuery({
