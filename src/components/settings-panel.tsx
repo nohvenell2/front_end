@@ -59,7 +59,7 @@ export function SettingsPanel() {
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-1">
                   <Label className="text-xs text-muted-foreground">{WEIGHT_LABELS[key]}</Label>
-                  <TooltipProvider delayDuration={100}>
+                  <TooltipProvider delay={100}>
                     <Tooltip>
                       <TooltipTrigger className="cursor-help text-muted-foreground">
                         <HelpCircle className="h-3 w-3" />
@@ -96,7 +96,7 @@ export function SettingsPanel() {
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-1">
             <Label className="text-sm font-bold text-foreground">Recency Half-life</Label>
-            <TooltipProvider delayDuration={100}>
+            <TooltipProvider delay={100}>
               <Tooltip>
                 <TooltipTrigger className="cursor-help text-muted-foreground">
                   <HelpCircle className="h-3 w-3" />

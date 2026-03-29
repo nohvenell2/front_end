@@ -62,7 +62,7 @@ function DistributionChart({
                 color: "var(--color-text-primary)",
               }}
               cursor={{ fill: "rgba(103,193,245,0.05)" }}
-              formatter={(value: number) => [formatPlaytime(value), "Playtime"]}
+              formatter={(value) => [typeof value === "number" ? formatPlaytime(value) : value, "Playtime"]}
             />
             <Bar dataKey="count" fill={barColor} radius={2} />
           </BarChart>
