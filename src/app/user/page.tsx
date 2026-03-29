@@ -11,6 +11,7 @@ import { enrichGames, formatPlaytime, steamHeaderUrl } from "@/lib/utils";
 import { MAX_GAME_SELECTION } from "@/lib/constants";
 import type { SteamGame, SteamGameEnriched } from "@/types/steam";
 
+import { Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -141,13 +142,14 @@ function GameCard({
         <span className="text-sm font-semibold leading-tight line-clamp-2 text-foreground">
           {game.name}
         </span>
-        <span className="text-xs text-muted-foreground">
+        <span className="flex items-center gap-1 text-sm text-muted-foreground">
+          <Clock className="w-3.5 h-3.5 shrink-0" />
           {formatPlaytime(game.playtime_forever)}
         </span>
         {genres.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-0.5">
             {genres.slice(0, 5).map((g) => (
-              <Badge key={g} variant="secondary" className="text-[12px] px-1 py-0 rounded-sm h-4">
+              <Badge key={g} variant="secondary" className="text-[13px] px-1.5 py-0 rounded-sm h-5">
                 {g}
               </Badge>
             ))}
@@ -462,8 +464,7 @@ export default function UserPage() {
             </div>
           ) : viewMode === "grid" ? (
             <div
-              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4 overflow-y-auto"
-              style={{ maxHeight: "65vh" }}
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4"
               role="list"
               aria-label="Game library"
             >
@@ -483,8 +484,7 @@ export default function UserPage() {
             </div>
           ) : viewMode === "list" ? (
             <div
-              className="flex flex-col gap-2 p-3 overflow-y-auto"
-              style={{ maxHeight: "65vh" }}
+              className="flex flex-col gap-2 p-3"
               role="list"
               aria-label="Game library"
             >

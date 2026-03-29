@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { formatPlaytime, steamHeaderUrl } from "@/lib/utils";
+import { Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { SteamGame } from "@/types/steam";
 
@@ -48,16 +49,17 @@ export function GameRow({ game, headerImage, genres, selected, onToggle, disable
         <span className="text-sm font-semibold text-foreground truncate">
           {game.name}
         </span>
-        <span className="text-xs text-muted-foreground">
+        <span className="flex items-center gap-1 text-sm text-muted-foreground">
+          <Clock className="w-3.5 h-3.5 shrink-0" />
           {formatPlaytime(game.playtime_forever)}
         </span>
       </div>
 
       {/* Genres */}
       {genres.length > 0 && (
-        <div className="hidden sm:flex flex-wrap justify-end gap-1 shrink-0 max-w-[240px]">
+        <div className="hidden sm:flex flex-wrap justify-end gap-1 shrink-0 max-w-[360px]">
           {genres.slice(0, 5).map((g) => (
-            <Badge key={g} variant="secondary" className="text-[12px] px-1.5 py-0 rounded-sm h-4">
+            <Badge key={g} variant="secondary" className="text-[13px] px-1.5 py-0 rounded-sm h-5">
               {g}
             </Badge>
           ))}
