@@ -15,7 +15,11 @@ export default async function HomePage() {
         <CardContent className="flex flex-col items-center gap-8 p-12">
           {/* Logo / Title */}
           <div className="flex flex-col items-center gap-3 text-center">
-            <div className="text-7xl">🎮</div>
+            <svg width="56" height="56" viewBox="0 0 233 233" fill="var(--color-accent)" aria-hidden="true">
+              <path d="M116.5 0C52.1 0 0 52.1 0 116.5c0 55.7 39.2 102.3 91.7 113.5L133 116.5c0-46.1 37.4-83.5 83.5-83.5 3.8 0 7.5.3 11.2.7C215.5 14.4 168.9 0 116.5 0z"/>
+              <path d="M166.5 98.3c-20.2 0-36.5 16.4-36.5 36.5 0 20.2 16.4 36.5 36.5 36.5S203 155 203 134.8c0-20.1-16.4-36.5-36.5-36.5zm0 60c-13 0-23.5-10.5-23.5-23.5s10.5-23.5 23.5-23.5 23.5 10.5 23.5 23.5-10.5 23.5-23.5 23.5z"/>
+              <path d="M84.8 177.8l-17-7c-3 6.9-9.8 11.7-17.8 11.7-10.6 0-19.3-8.6-19.3-19.3s8.6-19.3 19.3-19.3c7.5 0 14 4.3 17.3 10.6l17.5 7.3c-4.8-18.8-21.9-32.7-42.3-32.7-24.1 0-43.7 19.6-43.7 43.7S18.4 216.5 42.5 216.5c20.7 0 38.2-14.5 42.3-38.7z"/>
+            </svg>
             <h1 className="text-3xl font-bold text-foreground">
               Steam Game Recommender
             </h1>
