@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatPlaytime, enrichGames } from './utils'
+import { formatPlaytime, enrichGames, steamHeaderUrl, steamIconUrl } from './utils'
 import type { SteamGame } from '@/types/steam'
 import type { GamesInfoResponse } from '@/types/recommend'
 
@@ -87,5 +87,21 @@ describe('enrichGames', () => {
     expect(enriched[0].name).toBe('Game A')
     expect(enriched[0].playtime_forever).toBe(120)
     expect(enriched[0].img_icon_url).toBe('hash1')
+  })
+})
+
+describe('steamHeaderUrl', () => {
+  it('returns correct CDN URL for appid', () => {
+    expect(steamHeaderUrl(440)).toBe(
+      'https://cdn.cloudflare.steamstatic.com/steam/apps/440/header.jpg'
+    )
+  })
+})
+
+describe('steamIconUrl', () => {
+  it('returns correct Steam community URL for appid and hash', () => {
+    expect(steamIconUrl(440, 'abc123')).toBe(
+      'https://media.steampowered.com/steamcommunity/public/images/apps/440/abc123.jpg'
+    )
   })
 })
