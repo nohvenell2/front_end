@@ -6,6 +6,8 @@ etc/
 sample/
 # claude
 .claude/
+# dev docs
+dev_docs/
 # Next.js
 node_modules
 .next/
