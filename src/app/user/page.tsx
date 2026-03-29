@@ -174,7 +174,8 @@ export default function UserPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list" | "scroll">(() => {
     if (typeof window === "undefined") return "grid";
     const saved = localStorage.getItem("userPageViewMode");
-    return (saved === "grid" || saved === "list" || saved === "scroll") ? saved : "grid";
+    // "scroll" view is temporarily disabled — fall back to "grid" if saved
+    return (saved === "grid" || saved === "list") ? saved : "grid";
   });
   const [hideZeroPlaytime, setHideZeroPlaytime] = useState(true);
 
@@ -356,7 +357,8 @@ export default function UserPage() {
 
             {/* View toggle */}
             <div className="flex rounded-sm overflow-hidden border border-border shrink-0">
-              {(["grid", "list", "scroll"] as const).map((mode) => (
+              {/* "scroll" mode is temporarily disabled — kept in code but not exposed in UI */}
+              {(["grid", "list"] as const).map((mode) => (
                 <button
                   key={mode}
                   onClick={() => { setViewMode(mode); localStorage.setItem("userPageViewMode", mode); }}
@@ -366,9 +368,9 @@ export default function UserPage() {
                       ? "bg-accent text-white"
                       : "bg-background text-muted-foreground hover:text-foreground",
                   ].join(" ")}
-                  aria-label={mode === "grid" ? "Grid view" : mode === "list" ? "List view" : "Card scroll view"}
+                  aria-label={mode === "grid" ? "Grid view" : "List view"}
                 >
-                  {mode === "grid" ? "⊞" : mode === "list" ? "☰" : "⇔"}
+                  {mode === "grid" ? "⊞" : "☰"}
                 </button>
               ))}
             </div>
