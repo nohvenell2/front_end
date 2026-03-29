@@ -57,7 +57,7 @@ export function GameRow({ game, headerImage, genres, selected, onToggle, disable
 
       {/* Genres */}
       {genres.length > 0 && (
-        <div className="hidden sm:flex flex-wrap justify-end gap-1 shrink-0 max-w-[360px]">
+        <div className="hidden md:flex flex-wrap justify-end gap-1 shrink-0 max-w-[360px]">
           {genres.slice(0, 5).map((g) => (
             <Badge key={g} variant="secondary" className="text-[13px] px-1.5 py-0 rounded-sm h-5">
               {g}
@@ -84,7 +84,7 @@ export function GameRowSkeleton() {
         <div className="h-3 rounded-sm bg-muted animate-pulse" />
         <div className="h-2 w-12 rounded-sm bg-muted animate-pulse" />
       </div>
-      <div className="hidden sm:flex gap-1 shrink-0">
+      <div className="hidden md:flex gap-1 shrink-0">
         <div className="w-12 h-4 rounded-sm bg-muted animate-pulse" />
         <div className="w-14 h-4 rounded-sm bg-muted animate-pulse" />
       </div>

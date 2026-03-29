@@ -124,7 +124,7 @@ function RecommendInner() {
                   Finding games you&apos;ll love...
                 </span>
               </div>
-              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 8 }).map((_, i) => <RecommendCardSkeleton key={i} />)}
               </div>
             </div>
@@ -157,7 +157,7 @@ function RecommendInner() {
               <p className="text-xs text-muted-foreground">
                 Top {rankedGames.length} recommendations · re-ranked instantly on weight change
               </p>
-              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                 {rankedGames.map((game, i) => (
                   <RecommendCard key={game.game_id} game={game} rank={i + 1} />
                 ))}

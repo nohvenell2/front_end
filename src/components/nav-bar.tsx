@@ -20,7 +20,7 @@ export function NavBar({ session, title, left, right, rightmost }: NavBarProps) 
         <div className="flex items-center gap-3">
           {left}
           {title && (
-            <span className="text-base font-semibold text-foreground hidden sm:block">
+            <span className="text-base font-semibold text-foreground hidden md:block">
               {title}
             </span>
           )}
@@ -38,7 +38,7 @@ export function NavBar({ session, title, left, right, rightmost }: NavBarProps) 
               unoptimized
             />
           )}
-          <span className="text-sm font-bold text-foreground hidden sm:block">
+          <span className="text-sm font-bold text-foreground hidden md:block">
             {session?.user?.name}
           </span>
           <Button
