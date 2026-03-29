@@ -6,6 +6,8 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { HelpCircle } from "lucide-react";
 
 const WEIGHT_LABELS: Record<string, string> = {
   similarity: "Similarity",
@@ -14,11 +16,14 @@ const WEIGHT_LABELS: Record<string, string> = {
   recency: "Recency",
 };
 
-interface SettingsPanelProps {
-  onApply?: () => void;
-}
+const WEIGHT_DESCRIPTIONS: Record<string, string> = {
+  similarity: "Score based on genre & tag similarity to your selected games.",
+  popularity: "Score based on total player count across Steam.",
+  rating: "Score based on positive review ratio.",
+  recency: "Score that favors more recently released games.",
+};
 
-export function SettingsPanel({ onApply }: SettingsPanelProps) {
+export function SettingsPanel() {
   const { settings, dispatch } = useSettings();
 
   return (
@@ -26,7 +31,7 @@ export function SettingsPanel({ onApply }: SettingsPanelProps) {
       {/* Count */}
       <div className="flex flex-col gap-3">
         <div className="flex justify-between items-center">
-          <Label className="text-xs text-muted-foreground font-semibold">Result Count</Label>
+          <Label className="text-sm font-bold text-foreground">Result Count</Label>
           <span className="text-xs font-semibold text-primary">{settings.count}</span>
         </div>
         <Slider
@@ -45,24 +50,43 @@ export function SettingsPanel({ onApply }: SettingsPanelProps) {
 
       {/* Weights */}
       <div className="flex flex-col gap-4">
-        <Label className="text-xs text-muted-foreground font-semibold">Weights</Label>
-        {(["similarity", "popularity", "rating", "recency"] as const).map((key) => (
-          <div key={key} className="flex flex-col gap-2">
-            <div className="flex justify-between items-center">
-              <Label className="text-xs text-muted-foreground">{WEIGHT_LABELS[key]}</Label>
-              <span className="text-xs text-primary">{settings.weights[key]}</span>
+        <Label className="text-sm font-bold text-foreground">Weights</Label>
+        {(["similarity", "popularity", "rating", "recency"] as const).map((key) => {
+          const total = Object.values(settings.weights).reduce((a, b) => a + b, 0);
+          const pct = total > 0 ? Math.round((settings.weights[key] / total) * 100) : 0;
+          return (
+            <div key={key} className="flex flex-col gap-2">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-1">
+                  <Label className="text-xs text-muted-foreground">{WEIGHT_LABELS[key]}</Label>
+                  <TooltipProvider delayDuration={100}>
+                    <Tooltip>
+                      <TooltipTrigger className="cursor-help text-muted-foreground">
+                        <HelpCircle className="h-3 w-3" />
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="max-w-44 text-xs">
+                        {WEIGHT_DESCRIPTIONS[key]}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <span className="text-xs text-primary">
+                  {settings.weights[key]}
+                  <span className="text-muted-foreground ml-1">({pct}%)</span>
+                </span>
+              </div>
+              <Slider
+                min={1}
+                max={10}
+                step={1}
+                value={[settings.weights[key]]}
+                onValueChange={(v) =>
+                  dispatch({ type: "SET_WEIGHT", payload: { key, value: (v as number[])[0] } })
+                }
+              />
             </div>
-            <Slider
-              min={1}
-              max={10}
-              step={1}
-              value={[settings.weights[key]]}
-              onValueChange={(v) =>
-                dispatch({ type: "SET_WEIGHT", payload: { key, value: (v as number[])[0] } })
-              }
-            />
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <Separator />
@@ -70,7 +94,19 @@ export function SettingsPanel({ onApply }: SettingsPanelProps) {
       {/* Half-life */}
       <div className="flex flex-col gap-3">
         <div className="flex justify-between items-center">
-          <Label className="text-xs text-muted-foreground font-semibold">Recency Half-life</Label>
+          <div className="flex items-center gap-1">
+            <Label className="text-sm font-bold text-foreground">Recency Half-life</Label>
+            <TooltipProvider delayDuration={100}>
+              <Tooltip>
+                <TooltipTrigger className="cursor-help text-muted-foreground">
+                  <HelpCircle className="h-3 w-3" />
+                </TooltipTrigger>
+                <TooltipContent side="right" className="max-w-44 text-xs">
+                  Days until a game's recency score drops to 50%. Lower values favor newer releases more strongly.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
           <span className="text-xs text-primary">{settings.halfLifeDays} days</span>
         </div>
         <Slider
@@ -89,7 +125,7 @@ export function SettingsPanel({ onApply }: SettingsPanelProps) {
 
       {/* Filters */}
       <div className="flex flex-col gap-4">
-        <Label className="text-xs text-muted-foreground font-semibold">Filters</Label>
+        <Label className="text-sm font-bold text-foreground">Filters</Label>
 
         <div className="flex flex-col gap-1.5">
           <Label className="text-xs text-muted-foreground">Released After</Label>
@@ -144,7 +180,7 @@ export function SettingsPanel({ onApply }: SettingsPanelProps) {
 
       {/* Score Visualization */}
       <div className="flex flex-col gap-3">
-        <Label className="text-xs text-muted-foreground font-semibold">Score Visualization</Label>
+        <Label className="text-sm font-bold text-foreground">Score Visualization</Label>
         <div className="flex gap-1">
           {(["radar", "bars"] as const).map((mode) => (
             <button
@@ -163,26 +199,14 @@ export function SettingsPanel({ onApply }: SettingsPanelProps) {
       </div>
 
       {/* Actions */}
-      <div className="flex gap-2 pt-1">
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex-1"
-          onClick={() => dispatch({ type: "RESET_DEFAULTS" })}
-        >
-          Reset
-        </Button>
-        {onApply && (
-          <Button
-            variant="cta"
-            size="sm"
-            className="flex-1"
-            onClick={onApply}
-          >
-            Apply
-          </Button>
-        )}
-      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        className="w-full"
+        onClick={() => dispatch({ type: "RESET_DEFAULTS" })}
+      >
+        Reset to Default
+      </Button>
     </div>
   );
 }

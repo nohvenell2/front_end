@@ -10,9 +10,10 @@ interface NavBarProps {
   title?: string;
   left?: React.ReactNode;
   right?: React.ReactNode;
+  rightmost?: React.ReactNode;
 }
 
-export function NavBar({ session, title, left, right }: NavBarProps) {
+export function NavBar({ session, title, left, right, rightmost }: NavBarProps) {
   return (
     <nav className="sticky top-0 z-20 bg-popover border-b border-border">
       <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between gap-4">
@@ -47,6 +48,7 @@ export function NavBar({ session, title, left, right }: NavBarProps) {
           >
             Sign out
           </Button>
+          {rightmost}
         </div>
       </div>
     </nav>

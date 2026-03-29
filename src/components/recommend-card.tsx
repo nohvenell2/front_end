@@ -48,7 +48,7 @@ export function RecommendCard({ game, rank }: RecommendCardProps) {
       )}
     >
       {/* Header image */}
-      <div className="relative w-full" style={{ aspectRatio: "460/215" }}>
+      <a href={game.url} target="_blank" rel="noopener noreferrer" className="relative w-full block" style={{ aspectRatio: "460/215" }}>
         <Image
           src={game.header_image}
           alt={game.title}
@@ -65,7 +65,7 @@ export function RecommendCard({ game, rank }: RecommendCardProps) {
         )}>
           #{rank}
         </span>
-      </div>
+      </a>
 
       {/* Content */}
       <CardContent className="flex flex-col gap-2.5 p-3 flex-1">
@@ -172,7 +172,9 @@ export function RecommendCard({ game, rank }: RecommendCardProps) {
               <ScoreRadar scores={game.scores} />
             </div>
           ) : (
-            <ScoreProgressBars scores={game.scores} />
+            <div className="h-[220px] flex flex-col justify-center">
+              <ScoreProgressBars scores={game.scores} />
+            </div>
           )}
         </div>
       </CardContent>

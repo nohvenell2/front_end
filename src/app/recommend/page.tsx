@@ -93,26 +93,25 @@ function RecommendInner() {
     ? `Recommendations based on ${selectedAppids.length} games`
     : "Recommendations based on full library";
 
-  const navRight = (
-    <>
-      {isFetching && !recLoading && (
-        <span className="text-xs text-muted-foreground">Refreshing...</span>
-      )}
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetTrigger render={<Button variant="outline" size="sm" aria-label="Open settings"><Settings2 size={20} />Settings</Button>} />
-        <SheetContent side="right" className="overflow-y-auto bg-popover border-border p-0 sm:max-w-xs">
-          <SheetHeader className="px-4 pt-4 pb-2">
-            <SheetTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Settings</SheetTitle>
-          </SheetHeader>
-          <SettingsPanel onApply={() => setSheetOpen(false)} />
-        </SheetContent>
-      </Sheet>
-    </>
+  const navRight = isFetching && !recLoading
+    ? <span className="text-xs text-muted-foreground">Refreshing...</span>
+    : null;
+
+  const navRightmost = (
+    <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+      <SheetTrigger render={<Button variant="outline" size="sm" aria-label="Open settings"><Settings2 size={20} />Settings</Button>} />
+      <SheetContent side="right" className="overflow-y-auto bg-popover border-border p-0 sm:max-w-xs">
+        <SheetHeader className="px-4 pt-4 pb-2">
+          <SheetTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Settings</SheetTitle>
+        </SheetHeader>
+        <SettingsPanel />
+      </SheetContent>
+    </Sheet>
   );
 
   return (
     <div className="min-h-screen bg-background">
-      <NavBar session={session} title={navTitle} left={navLeft} right={navRight} />
+      <NavBar session={session} title={navTitle} left={navLeft} right={navRight} rightmost={navRightmost} />
 
       <div className="flex max-w-7xl mx-auto">
         {/* ── Card Area ── */}
