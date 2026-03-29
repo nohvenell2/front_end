@@ -185,7 +185,7 @@ export function SettingsPanel() {
           {(["radar", "bars"] as const).map((mode) => (
             <button
               key={mode}
-              className={`flex-1 text-xs py-1.5 rounded transition-colors capitalize ${
+              className={`flex-1 text-xs py-1.5 rounded-sm transition-colors capitalize ${
                 settings.scoreViz === mode
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground hover:bg-muted/80"
