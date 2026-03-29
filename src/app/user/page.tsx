@@ -2,202 +2,536 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { fetchSteamLibrary, fetchGamesInfo } from "@/lib/api-client";
+import { enrichGames, formatPlaytime, steamHeaderUrl } from "@/lib/utils";
+import { MAX_GAME_SELECTION } from "@/lib/constants";
 import type { SteamGame, SteamGameEnriched } from "@/types/steam";
-import { GameLibrary, GameLibrarySkeleton } from "@/components/user/game-library";
-import { StatsDashboard } from "@/components/user/stats-dashboard";
+
+import { Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SettingsDialog } from "@/components/settings/settings-dialog";
-import { signOut } from "next-auth/react";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { NavBar } from "@/components/nav-bar";
+import { StatCard, StatCardSkeleton } from "@/components/stat-card";
+import { GameRow, GameRowSkeleton } from "@/components/game-row";
+import { GameCarousel } from "@/components/game-carousel";
 
-const TOP_GAMES_FOR_ENRICHMENT = 20;
+const ENRICH_LIMIT = 50;
 
-export default function UserPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [selectMode, setSelectMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+// recharts — dynamic import, SSR disabled
+const BarChart = dynamic(() => import("recharts").then((m) => m.BarChart), { ssr: false });
+const Bar = dynamic(() => import("recharts").then((m) => m.Bar), { ssr: false });
+const XAxis = dynamic(() => import("recharts").then((m) => m.XAxis), { ssr: false });
+const YAxis = dynamic(() => import("recharts").then((m) => m.YAxis), { ssr: false });
+const Tooltip = dynamic(() => import("recharts").then((m) => m.Tooltip), { ssr: false });
+const ResponsiveContainer = dynamic(() => import("recharts").then((m) => m.ResponsiveContainer), { ssr: false });
 
-  const handleSelectModeToggle = () => {
-    setSelectMode((prev) => {
-      if (prev) setSelectedIds(new Set());
-      return !prev;
-    });
-  };
+// ── Distribution Chart ──────────────────────────────────────────────────────
 
-  const handleToggleSelect = (appid: number) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(appid)) next.delete(appid);
-      else next.add(appid);
-      return next;
-    });
-  };
+function DistributionChart({
+  title,
+  data,
+  barColor,
+}: {
+  title: string;
+  data: { name: string; count: number }[];
+  barColor: string;
+}) {
+  if (data.length === 0) return null;
+  return (
+    <Card className="flex-1 min-w-0 rounded-sm shadow-none">
+      <CardContent className="p-4">
+        <p className="text-sm font-semibold mb-3 uppercase tracking-wide text-muted-foreground">
+          {title}
+        </p>
+        <ResponsiveContainer width="100%" height={320}>
+          <BarChart data={data} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 0 }}>
+            <XAxis type="number" tick={{ fontSize: 13, fill: "var(--color-text-secondary)" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${Math.round(v / 60)}h`} />
+            <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 13, fill: "var(--color-text-secondary)" }} axisLine={false} tickLine={false} />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "var(--color-bg-header)",
+                border: "1px solid var(--color-steam-border)",
+                borderRadius: 3,
+                fontSize: 14,
+                color: "var(--color-text-primary)",
+              }}
+              cursor={{ fill: "rgba(103,193,245,0.05)" }}
+              formatter={(value: number) => [formatPlaytime(value), "Playtime"]}
+            />
+            <Bar dataKey="count" fill={barColor} radius={2} />
+          </BarChart>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
+  );
+}
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.replace("/");
-    }
-  }, [status, router]);
+// ── Game Card (grid view) ───────────────────────────────────────────────────
 
-  const {
-    data: rawGames,
-    isLoading: libraryLoading,
-    error: libraryError,
-  } = useQuery<SteamGame[]>({
-    queryKey: ["steamLibrary"],
-    queryFn: fetchSteamLibrary,
-    enabled: status === "authenticated",
-    staleTime: 5 * 60 * 1000,
-  });
-
-  // Enrich top 20 games with genres/tags/header_image from games/info API
-  const { data: enrichedGames } = useQuery<SteamGameEnriched[]>({
-    queryKey: ["enrichedGames", rawGames?.slice(0, TOP_GAMES_FOR_ENRICHMENT).map((g) => g.appid)],
-    queryFn: async () => {
-      if (!rawGames) return [];
-      const sorted = [...rawGames].sort(
-        (a, b) => b.playtime_forever - a.playtime_forever
-      );
-      const topGames = sorted.slice(0, TOP_GAMES_FOR_ENRICHMENT);
-      const infoResponse = await fetchGamesInfo(topGames.map((g) => g.appid));
-      const infoMap = new Map(infoResponse.data.map((g) => [g.game_id, g]));
-      return rawGames.map((game) => {
-        const info = infoMap.get(game.appid);
-        return {
-          ...game,
-          genres: info?.genres ?? [],
-          tags: info?.tags ?? [],
-          header_image: info?.header_image,
-        };
-      });
-    },
-    enabled: !!rawGames && rawGames.length > 0,
-    staleTime: Infinity,
-  });
-
-  const displayGames: SteamGameEnriched[] =
-    enrichedGames ??
-    (rawGames?.map((g) => ({ ...g, genres: [], tags: [] })) ?? []);
-
-  if (status === "loading" || status === "unauthenticated") {
-    return null;
+function GameCard({
+  game,
+  genres,
+  headerImage,
+  selected,
+  onToggle,
+  disabled,
+  priority,
+}: {
+  game: SteamGame;
+  genres: string[];
+  headerImage?: string;
+  selected: boolean;
+  onToggle: (appid: number) => void;
+  disabled: boolean;
+  priority?: boolean;
+}) {
+  const [imgError, setImgError] = useState(false);
+  const imgSrc = headerImage ?? steamHeaderUrl(game.appid);
+  const prevSrc = useRef(imgSrc);
+  if (prevSrc.current !== imgSrc) {
+    prevSrc.current = imgSrc;
+    if (imgError) setImgError(false);
   }
 
   return (
-    <div className="min-h-screen">
-      {/* Header */}
-      <header className="border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {session?.user?.image && (
-              <Image
-                src={session.user.image}
-                alt={session.user.name ?? "User avatar"}
-                width={36}
-                height={36}
-                className="rounded-full"
-                unoptimized
-              />
-            )}
-            <span className="font-semibold">{session?.user?.name}</span>
+    <label
+      className={[
+        "relative flex flex-col h-full cursor-pointer rounded-sm overflow-hidden transition-colors select-none bg-card",
+        selected ? "border-2 border-accent" : "border-2 border-border hover:border-accent/50",
+        disabled && !selected ? "opacity-50 pointer-events-none" : "",
+      ].join(" ")}
+    >
+      <input
+        type="checkbox"
+        checked={selected}
+        disabled={disabled && !selected}
+        onChange={() => onToggle(game.appid)}
+        className="sr-only"
+        aria-label={`Select ${game.name}`}
+      />
+      <div className="relative w-full" style={{ paddingTop: "46.7%" }}>
+        {imgError ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-muted">
+            <span className="text-xl">🎮</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => signOut({ callbackUrl: "/" })}>
-            Sign out
-          </Button>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20 space-y-10">
-        {/* Stats */}
-        {displayGames.length > 0 && (
-          <section>
-            <h2 className="text-xl font-semibold mb-4">Your Library Stats</h2>
-            <StatsDashboard games={displayGames} />
-          </section>
+        ) : (
+          <Image
+            src={imgSrc}
+            alt=""
+            fill
+            className="object-cover select-none"
+            draggable={false}
+            unoptimized
+            loading={priority ? "eager" : "lazy"}
+            sizes="(max-width: 768px) 50vw, 25vw"
+            onError={() => setImgError(true)}
+          />
         )}
+        {selected && (
+          <div className="absolute inset-0 flex items-center justify-center bg-accent/35">
+            <span className="text-5xl font-bold text-green-400">✓</span>
+          </div>
+        )}
+      </div>
+      <div className="flex flex-col gap-1.5 p-2.5">
+        <span className="text-sm font-semibold leading-tight line-clamp-2 text-foreground">
+          {game.name}
+        </span>
+        <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
+          <Clock className="w-3.5 h-3.5 shrink-0" />
+          {formatPlaytime(game.playtime_forever)}
+        </span>
+        {genres.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-0.5">
+            {genres.slice(0, 5).map((g) => (
+              <Badge key={g} variant="secondary" className="text-[13px] px-1.5 py-0 rounded-sm h-5">
+                {g}
+              </Badge>
+            ))}
+          </div>
+        )}
+      </div>
+    </label>
+  );
+}
 
-        {/* Library */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Game Library</h2>
+// ── Page ───────────────────────────────────────────────────────────────────
+
+export default function UserPage() {
+  const router = useRouter();
+  const { data: session, status } = useSession();
+
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<"playtime" | "name">("playtime");
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [chartsOpen, setChartsOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "scroll">(() => {
+    if (typeof window === "undefined") return "grid";
+    const saved = localStorage.getItem("userPageViewMode");
+    // "scroll" view is temporarily disabled — fall back to "grid" if saved
+    return (saved === "grid" || saved === "list") ? saved : "grid";
+  });
+  const [hideZeroPlaytime, setHideZeroPlaytime] = useState(true);
+
+  useEffect(() => {
+    if (status === "unauthenticated") router.replace("/");
+  }, [status, router]);
+
+  const { data: library, isLoading: libraryLoading, error: libraryError } = useQuery({
+    queryKey: ["steamLibrary"],
+    queryFn: fetchSteamLibrary,
+    enabled: status === "authenticated",
+  });
+
+  const topGameIds = useMemo(() => {
+    if (!library) return [];
+    return [...library]
+      .sort((a, b) => b.playtime_forever - a.playtime_forever)
+      .slice(0, ENRICH_LIMIT)
+      .map((g) => g.appid);
+  }, [library]);
+
+  const { data: gamesInfo, isLoading: enrichLoading } = useQuery({
+    queryKey: ["gamesInfo", topGameIds],
+    queryFn: () => fetchGamesInfo(topGameIds),
+    enabled: topGameIds.length > 0,
+  });
+
+  const enrichedGames = useMemo<SteamGameEnriched[]>(() => {
+    if (!library || !gamesInfo) return [];
+    return enrichGames(library.filter((g) => topGameIds.includes(g.appid)), gamesInfo);
+  }, [library, gamesInfo, topGameIds]);
+
+  const stats = useMemo(() => {
+    if (!library) return null;
+    const totalPlaytime = library.reduce((s, g) => s + g.playtime_forever, 0);
+    const topOfWeighted = (items: { list: string[]; playtime: number }[]) => {
+      const totals: Record<string, number> = {};
+      for (const { list, playtime } of items)
+        for (const item of list)
+          totals[item] = (totals[item] ?? 0) + playtime;
+      return Object.entries(totals).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "-";
+    };
+    const topGenre = enrichedGames.length > 0
+      ? topOfWeighted(enrichedGames.map((g) => ({ list: g.genres, playtime: g.playtime_forever })))
+      : "-";
+    const topTag = enrichedGames.length > 0
+      ? topOfWeighted(enrichedGames.map((g) => ({ list: g.tags, playtime: g.playtime_forever })))
+      : "-";
+    return { totalGames: library.length, totalPlaytime, topGenre, topTag };
+  }, [library, enrichedGames]);
+
+  const genreChartData = useMemo(() => {
+    const totals: Record<string, number> = {};
+    for (const g of enrichedGames)
+      for (const genre of g.genres)
+        totals[genre] = (totals[genre] ?? 0) + g.playtime_forever;
+    return Object.entries(totals).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([name, count]) => ({ name, count }));
+  }, [enrichedGames]);
+
+  const tagChartData = useMemo(() => {
+    const totals: Record<string, number> = {};
+    for (const g of enrichedGames)
+      for (const tag of g.tags)
+        totals[tag] = (totals[tag] ?? 0) + g.playtime_forever;
+    return Object.entries(totals).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([name, count]) => ({ name, count }));
+  }, [enrichedGames]);
+
+  const enrichedMap = useMemo(() => {
+    const infoById = new Map(gamesInfo?.data.map((g) => [g.game_id, g]) ?? []);
+    return new Map(
+      enrichedGames.map((g) => [g.appid, {
+        genres: g.genres,
+        headerImage: g.header_image,
+        description: infoById.get(g.appid)?.description,
+      }])
+    );
+  }, [enrichedGames, gamesInfo]);
+
+  const libraryMap = useMemo(
+    () => new Map(library?.map((g) => [g.appid, g]) ?? []),
+    [library],
+  );
+
+  const zeroPlaytimeCount = useMemo(
+    () => library?.filter((g) => g.playtime_forever === 0).length ?? 0,
+    [library],
+  );
+
+  const filteredGames = useMemo<SteamGame[]>(() => {
+    if (!library) return [];
+    let games = hideZeroPlaytime ? library.filter((g) => g.playtime_forever > 0) : library;
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      games = games.filter((g) => g.name.toLowerCase().includes(q));
+    }
+    return sort === "playtime"
+      ? [...games].sort((a, b) => b.playtime_forever - a.playtime_forever)
+      : [...games].sort((a, b) => a.name.localeCompare(b.name));
+  }, [library, search, sort, hideZeroPlaytime]);
+
+  const toggleSelect = useCallback((appid: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(appid)) {
+        next.delete(appid);
+      } else if (next.size < MAX_GAME_SELECTION) {
+        next.add(appid);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleRecommend = () => {
+    if (selectedIds.size > 0) {
+      router.push(`/recommend?selected=${[...selectedIds].join(",")}`);
+    } else {
+      router.push("/recommend");
+    }
+  };
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <span className="text-sm text-muted-foreground">Loading...</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <NavBar session={session} title="🎮 Steam Recommender" />
+
+      <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col gap-6">
+
+        {/* ── Stats Dashboard (secondary hierarchy) ── */}
+        {libraryLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            {Array.from({ length: 5 }).map((_, i) => <StatCardSkeleton key={i} />)}
+          </div>
+        ) : stats ? (
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              <StatCard value={stats.totalGames.toLocaleString()} label="Games" />
+              <StatCard value={formatPlaytime(stats.totalPlaytime)} label="Total Playtime" />
+              <StatCard value={enrichLoading ? "…" : stats.topGenre} label="Top Genre" />
+              <StatCard value={enrichLoading ? "…" : stats.topTag}   label="Top Tag" />
+              <StatCard value={String(selectedIds.size)} label={`Selected / ${MAX_GAME_SELECTION}`} />
+            </div>
+            <div className="flex items-center gap-3">
+              <Button variant="outline" size="sm" onClick={() => setChartsOpen((v) => !v)}>
+                {chartsOpen ? "▲" : "▼"} Genre / Tag Chart
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                * Based on top {ENRICH_LIMIT} games by playtime
+              </span>
+            </div>
+            {chartsOpen && (
+              enrichLoading ? (
+                <div className="flex gap-4">
+                  <div className="flex-1 h-96 rounded-sm bg-card border border-border animate-pulse" />
+                  <div className="flex-1 h-96 rounded-sm bg-card border border-border animate-pulse" />
+                </div>
+              ) : (
+                <div className="flex gap-4 flex-wrap">
+                  <DistributionChart title="Genre Distribution" data={genreChartData} barColor="var(--color-accent)" />
+                  <DistributionChart title="Tag Distribution"   data={tagChartData}  barColor="#8f5fde" />
+                </div>
+              )
+            )}
+          </>
+        ) : null}
+
+        {/* ── Library (primary — main workspace) ── */}
+        <Card className="rounded-sm shadow-none overflow-hidden p-0 gap-0">
+          {/* Toolbar */}
+          <div className="flex flex-wrap items-center gap-3 px-4 py-3 bg-popover border-b border-border">
+            <Input
+              type="search"
+              placeholder="Search games..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="flex-1 min-w-[160px] h-8 text-sm bg-background"
+            />
+
+            {/* View toggle */}
+            <div className="flex rounded-sm overflow-hidden border border-border shrink-0">
+              {/* "scroll" mode is temporarily disabled — kept in code but not exposed in UI */}
+              {(["grid", "list"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => { setViewMode(mode); localStorage.setItem("userPageViewMode", mode); }}
+                  className={[
+                    "px-2.5 py-1.5 text-xs transition-colors",
+                    viewMode === mode
+                      ? "bg-accent text-white"
+                      : "bg-background text-muted-foreground hover:text-foreground",
+                  ].join(" ")}
+                  aria-label={mode === "grid" ? "Grid view" : "List view"}
+                >
+                  {mode === "grid" ? "⊞" : "☰"}
+                </button>
+              ))}
+            </div>
+
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as "playtime" | "name")}
+              className="text-xs px-2 py-1.5 rounded-sm bg-background border border-border text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+            >
+              <option value="playtime">By Playtime</option>
+              <option value="name">By Name</option>
+            </select>
+
+            <Button variant="cta" size="sm" className="ml-auto" onClick={handleRecommend}>
+              {selectedIds.size > 0
+                ? `Recommend from ${selectedIds.size} games`
+                : "Recommend from full library"}
+            </Button>
           </div>
 
-          {libraryLoading && <GameLibrarySkeleton />}
-
-          {libraryError && (
-            <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center space-y-2">
-              <p className="font-medium text-destructive">
-                Could not load your game library.
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Make sure your Steam profile and game details are set to{" "}
-                <strong>Public</strong> in{" "}
-                <a
-                  href="https://steamcommunity.com/my/edit/settings"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline"
-                >
-                  Steam Privacy Settings
-                </a>
-                .
-              </p>
+          {/* Zero-playtime info bar */}
+          {!libraryLoading && zeroPlaytimeCount > 0 && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-card border-b border-border text-xs text-muted-foreground">
+              <span className="text-amber-400 shrink-0">⚠</span>
+              <span className="flex-1">
+                {hideZeroPlaytime
+                  ? <><strong className="text-foreground">{zeroPlaytimeCount} unplayed game{zeroPlaytimeCount !== 1 ? "s" : ""}</strong> hidden — unplayed games provide no signal and are excluded from recommendations.</>
+                  : <><strong className="text-foreground">{zeroPlaytimeCount} unplayed game{zeroPlaytimeCount !== 1 ? "s" : ""}</strong> shown — these have no playtime data and will not affect recommendations.</>
+                }
+              </span>
+              <button
+                onClick={() => setHideZeroPlaytime((v) => !v)}
+                className="shrink-0 px-2 py-0.5 rounded-sm border border-border hover:border-accent/60 hover:text-foreground transition-colors"
+              >
+                {hideZeroPlaytime ? "Show" : "Hide"}
+              </button>
             </div>
           )}
 
-          {!libraryLoading && !libraryError && displayGames.length > 0 && (
-            <GameLibrary
-              games={displayGames}
-              selectable={selectMode}
-              selectedIds={selectedIds}
-              onToggleSelect={handleToggleSelect}
-            />
+          {/* Selected chips */}
+          {selectedIds.size > 0 && library && (
+            <div className="flex flex-wrap gap-2 px-4 py-2 bg-card border-b border-border">
+              {[...selectedIds].map((id) => {
+                const g = libraryMap.get(id);
+                if (!g) return null;
+                return (
+                  <button
+                    key={g.appid}
+                    onClick={() => toggleSelect(g.appid)}
+                    className="flex items-center gap-1 px-2 py-1 rounded-sm text-xs bg-popover border border-accent text-foreground hover:opacity-75 transition-opacity"
+                  >
+                    {g.name}
+                    <span className="text-muted-foreground">✕</span>
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                className="flex items-center gap-1 px-2 py-1 rounded-sm text-xs bg-destructive/10 border border-destructive text-destructive hover:opacity-75 transition-opacity"
+              >
+                Clear all
+              </button>
+            </div>
           )}
-        </section>
-      </main>
 
-      {/* Sticky action bar */}
-      <div className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex gap-3 items-center">
-          <div className="mr-auto flex items-center gap-2">
-            <Button
-              variant={selectMode ? "default" : "outline"}
-              size="sm"
-              onClick={handleSelectModeToggle}
-            >
-              {selectMode ? `Select (${selectedIds.size})` : "Select"}
-            </Button>
-            {selectMode && selectedIds.size > 0 && (
-              <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>
-                Clear
+          {/* Content area */}
+          {libraryLoading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="flex flex-col rounded-sm overflow-hidden border-2 border-border animate-pulse bg-card">
+                  <div className="w-full bg-muted" style={{ paddingTop: "46.7%" }} />
+                  <div className="flex flex-col gap-2 p-2.5">
+                    <div className="h-3 rounded-sm bg-muted" />
+                    <div className="h-2 w-12 rounded-sm bg-muted" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : libraryError ? (
+            <div className="flex flex-col items-center gap-3 py-12 px-6 text-center bg-destructive/5 border-destructive/30">
+              <span className="text-3xl">⚠️</span>
+              <p className="text-sm font-semibold text-destructive">Failed to load library</p>
+              <p className="text-xs text-muted-foreground">
+                Make sure your Steam profile is set to public, then try again.
+              </p>
+              <Button variant="outline" size="sm" className="mt-1 border-destructive text-destructive" onClick={() => window.location.reload()}>
+                Retry
               </Button>
-            )}
-          </div>
-          <Button variant="outline" onClick={() => setSettingsOpen(true)}>
-            Configure Recommendations
-          </Button>
-          <Button
-            onClick={() => {
-              const params = new URLSearchParams();
-              if (selectMode && selectedIds.size > 0) {
-                params.set("selected", Array.from(selectedIds).join(","));
-              }
-              const query = params.toString();
-              router.push(`/recommend${query ? `?${query}` : ""}`);
-            }}
-            disabled={displayGames.length === 0}
-          >
-            Get Recommendations
-          </Button>
-        </div>
-      </div>
+            </div>
+          ) : filteredGames.length === 0 ? (
+            <div className="flex flex-col items-center gap-3 py-12 text-center">
+              <span className="text-3xl">🔍</span>
+              <p className="text-sm font-semibold text-foreground">No results</p>
+              <p className="text-xs text-muted-foreground">Try a different search term.</p>
+              <Button variant="outline" size="sm" className="mt-1" onClick={() => setSearch("")}>
+                Clear search
+              </Button>
+            </div>
+          ) : viewMode === "grid" ? (
+            <div
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4"
+              role="list"
+              aria-label="Game library"
+            >
+              {filteredGames.map((game, i) => (
+                <div key={game.appid} role="listitem">
+                  <GameCard
+                    game={game}
+                    genres={enrichedMap.get(game.appid)?.genres ?? []}
+                    headerImage={enrichedMap.get(game.appid)?.headerImage}
+                    selected={selectedIds.has(game.appid)}
+                    onToggle={toggleSelect}
+                    disabled={selectedIds.size >= MAX_GAME_SELECTION}
+                    priority={i === 0}
+                  />
+                </div>
+              ))}
+            </div>
+          ) : viewMode === "list" ? (
+            <div
+              className="flex flex-col gap-2 p-3"
+              role="list"
+              aria-label="Game library"
+            >
+              {filteredGames.map((game) => (
+                <GameRow
+                  key={game.appid}
+                  game={game}
+                  headerImage={enrichedMap.get(game.appid)?.headerImage}
+                  genres={enrichedMap.get(game.appid)?.genres ?? []}
+                  selected={selectedIds.has(game.appid)}
+                  onToggle={toggleSelect}
+                  disabled={selectedIds.size >= MAX_GAME_SELECTION}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="h-[480px] py-4" role="list" aria-label="Game library">
+              <GameCarousel
+                games={filteredGames}
+                enrichedMap={enrichedMap}
+                selectedIds={selectedIds}
+                onToggle={toggleSelect}
+                maxSelection={MAX_GAME_SELECTION}
+              />
+            </div>
+          )}
 
-      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+          {/* Selection cap hint */}
+          {selectedIds.size >= MAX_GAME_SELECTION && (
+            <div className="px-4 py-2 text-xs text-center text-muted-foreground bg-card border-t border-border">
+              You can select up to {MAX_GAME_SELECTION} games.
+            </div>
+          )}
+        </Card>
+      </div>
     </div>
   );
 }

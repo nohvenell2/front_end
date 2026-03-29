@@ -4,9 +4,10 @@
 # etc
 etc/
 sample/
-dev_docs/
 # claude
 .claude/
+# dev docs
+dev_docs/
 # Next.js
 node_modules
 .next/
@@ -14,3 +15,4 @@ out/
 tsconfig.tsbuildinfo
 # Docker
 
+.gstack/

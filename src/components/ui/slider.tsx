@@ -1,57 +1,67 @@
 "use client"
 
 import * as React from "react"
-import { Slider as SliderPrimitive } from "@base-ui/react/slider"
-
 import { cn } from "@/lib/utils"
 
-function toArray(v: number | readonly number[] | undefined, fallback: number): readonly number[] {
-  if (Array.isArray(v)) return v as readonly number[];
-  if (typeof v === "number") return [v];
-  return [fallback];
+// base-ui Slider.Thumb renders a <script> tag that React rejects in client
+// components. Replaced with a native <input type="range"> that is styled to
+// match the shadcn look and accepts the same value/onValueChange API.
+
+interface SliderProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "defaultValue" | "onChange"> {
+  value?: number[]
+  defaultValue?: number[]
+  onValueChange?: (value: number[]) => void
+  min?: number
+  max?: number
+  step?: number
 }
 
 function Slider({
   className,
-  defaultValue,
   value,
+  defaultValue,
+  onValueChange,
   min = 0,
+  max = 100,
+  step = 1,
+  disabled,
   ...props
-}: SliderPrimitive.Root.Props) {
-  const normalizedValue = value !== undefined ? toArray(value, min) : undefined;
-  const normalizedDefault = defaultValue !== undefined ? toArray(defaultValue, min) : undefined;
-
-  const thumbCount = (normalizedValue ?? normalizedDefault ?? [min]).length;
+}: SliderProps) {
+  const current = value?.[0] ?? defaultValue?.[0] ?? min
+  const pct = ((current - min) / (max - min)) * 100
 
   return (
-    <SliderPrimitive.Root
-      className={cn("data-horizontal:w-full data-vertical:h-full", className)}
+    <div
       data-slot="slider"
-      defaultValue={normalizedDefault}
-      value={normalizedValue}
-      min={min}
-      thumbAlignment="edge"
-      {...props}
+      className={cn("relative flex w-full touch-none items-center", className)}
     >
-      <SliderPrimitive.Control className="relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-vertical:h-full data-vertical:min-h-40 data-vertical:w-auto data-vertical:flex-col">
-        <SliderPrimitive.Track
-          data-slot="slider-track"
-          className="relative grow overflow-hidden rounded-full bg-muted select-none data-horizontal:h-1 data-horizontal:w-full data-vertical:h-full data-vertical:w-1"
-        >
-          <SliderPrimitive.Indicator
-            data-slot="slider-range"
-            className="bg-primary select-none data-horizontal:h-full data-vertical:w-full"
-          />
-        </SliderPrimitive.Track>
-        {Array.from({ length: thumbCount }, (_, index) => (
-          <SliderPrimitive.Thumb
-            data-slot="slider-thumb"
-            key={index}
-            className="relative block size-3 shrink-0 rounded-full border border-ring bg-white ring-ring/50 transition-[color,box-shadow] select-none after:absolute after:-inset-2 hover:ring-3 focus-visible:ring-3 focus-visible:outline-hidden active:ring-3 disabled:pointer-events-none disabled:opacity-50"
-          />
-        ))}
-      </SliderPrimitive.Control>
-    </SliderPrimitive.Root>
+      <div className="relative w-full h-1 rounded-full bg-muted overflow-visible">
+        {/* filled track */}
+        <div
+          className="absolute left-0 top-0 h-full bg-primary rounded-full pointer-events-none"
+          style={{ width: `${pct}%` }}
+        />
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={current}
+          disabled={disabled}
+          onChange={(e) => onValueChange?.([Number(e.target.value)])}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:pointer-events-none"
+          aria-valuemin={min}
+          aria-valuemax={max}
+          aria-valuenow={current}
+          {...props}
+        />
+        {/* thumb */}
+        <div
+          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 size-3 rounded-full bg-white border border-ring ring-ring/50 pointer-events-none transition-[box-shadow]"
+          style={{ left: `${pct}%` }}
+        />
+      </div>
+    </div>
   )
 }
 

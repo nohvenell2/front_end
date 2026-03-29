@@ -25,6 +25,9 @@ type Action =
         value: string | number;
       };
     }
+  | { type: "SET_HALF_LIFE_DAYS"; payload: number }
+  | { type: "SET_SCORE_VIZ"; payload: "radar" | "bars" }
+  | { type: "HYDRATE"; payload: RecommendationSettings }
   | { type: "RESET_DEFAULTS" };
 
 function reducer(
@@ -47,6 +50,12 @@ function reducer(
           [action.payload.key]: action.payload.value,
         },
       };
+    case "SET_HALF_LIFE_DAYS":
+      return { ...state, halfLifeDays: action.payload };
+    case "SET_SCORE_VIZ":
+      return { ...state, scoreViz: action.payload };
+    case "HYDRATE":
+      return action.payload;
     case "RESET_DEFAULTS":
       return DEFAULT_SETTINGS;
     default:
@@ -64,34 +73,18 @@ const SettingsContext = createContext<SettingsContextValue | null>(null);
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, dispatch] = useReducer(reducer, DEFAULT_SETTINGS);
 
-  // Hydrate from localStorage on mount
+  // Hydrate from localStorage on mount — single HYDRATE dispatch to avoid N writes
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored) as RecommendationSettings;
-        // Apply each field individually to avoid full state replacement issues
-        dispatch({ type: "SET_COUNT", payload: parsed.count });
-        (
-          Object.keys(parsed.weights) as Array<
-            keyof RecommendationSettings["weights"]
-          >
-        ).forEach((key) => {
-          dispatch({
-            type: "SET_WEIGHT",
-            payload: { key, value: parsed.weights[key] },
-          });
-        });
-        (
-          Object.keys(parsed.filters) as Array<
-            keyof RecommendationSettings["filters"]
-          >
-        ).forEach((key) => {
-          dispatch({
-            type: "SET_FILTER",
-            payload: { key, value: parsed.filters[key] },
-          });
-        });
+        dispatch({ type: "HYDRATE", payload: {
+          ...DEFAULT_SETTINGS,
+          ...parsed,
+          weights: { ...DEFAULT_SETTINGS.weights, ...parsed.weights },
+          filters: { ...DEFAULT_SETTINGS.filters, ...parsed.filters },
+        } });
       }
     } catch {
       // Ignore invalid localStorage data

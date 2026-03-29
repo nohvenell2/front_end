@@ -1,7 +1,11 @@
 import type { RecommendationSettings } from "@/types/settings";
 
 export const CANDIDATE_LIMIT = parseInt(
-  process.env.NEXT_PUBLIC_CANDIDATE_LIMIT ?? "50"
+  process.env.NEXT_PUBLIC_CANDIDATE_LIMIT ?? "100"
+);
+
+export const MAX_GAME_SELECTION = parseInt(
+  process.env.NEXT_PUBLIC_MAX_GAME_SELECTION ?? "20"
 );
 
 export const DEFAULT_SETTINGS: RecommendationSettings = {
@@ -29,4 +33,5 @@ export const DEFAULT_SETTINGS: RecommendationSettings = {
   halfLifeDays: parseInt(
     process.env.NEXT_PUBLIC_DEFAULT_HALF_LIFE_DAYS ?? "1825"
   ),
+  scoreViz: "radar" as const,
 };
