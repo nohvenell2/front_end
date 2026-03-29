@@ -10,9 +10,9 @@ import { useSettings } from "@/context/settings-context";
 import { CANDIDATE_LIMIT } from "@/lib/constants";
 import type { RankedGame } from "@/types/recommend";
 
+import { Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Separator } from "@/components/ui/separator";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Card, CardContent } from "@/components/ui/card";
 import { NavBar } from "@/components/nav-bar";
 import { SettingsPanel } from "@/components/settings-panel";
@@ -96,12 +96,14 @@ function RecommendInner() {
   const navRight = (
     <>
       {isFetching && !recLoading && (
-        <span className="text-xs text-muted-foreground hidden lg:block">Refreshing...</span>
+        <span className="text-xs text-muted-foreground">Refreshing...</span>
       )}
-      {/* Mobile settings trigger */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetTrigger render={<Button variant="outline" size="sm" className="lg:hidden" aria-label="Open settings">⚙ Settings</Button>} />
-        <SheetContent side="bottom" className="max-h-[70vh] overflow-y-auto bg-popover border-border p-0">
+        <SheetTrigger render={<Button variant="outline" size="sm" aria-label="Open settings"><Settings2 size={20} />Settings</Button>} />
+        <SheetContent side="right" className="overflow-y-auto bg-popover border-border p-0 sm:max-w-xs">
+          <SheetHeader className="px-4 pt-4 pb-2">
+            <SheetTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Settings</SheetTitle>
+          </SheetHeader>
           <SettingsPanel onApply={() => setSheetOpen(false)} />
         </SheetContent>
       </Sheet>
@@ -112,21 +114,7 @@ function RecommendInner() {
     <div className="min-h-screen bg-background">
       <NavBar session={session} title={navTitle} left={navLeft} right={navRight} />
 
-      <div className="flex max-w-7xl mx-auto gap-0">
-        {/* ── Settings Sidebar (lg) ── */}
-        <aside
-          className="hidden lg:flex flex-col shrink-0 overflow-y-auto sticky top-[53px] self-start border-r border-border"
-          style={{ width: 280, maxHeight: "calc(100vh - 53px)" }}
-        >
-          <div className="px-4 pt-4 pb-2">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Settings
-            </span>
-          </div>
-          <Separator />
-          <SettingsPanel />
-        </aside>
-
+      <div className="flex max-w-7xl mx-auto">
         {/* ── Card Area ── */}
         <main className="flex-1 min-w-0 px-6 py-6">
           {isLoading ? (
@@ -137,7 +125,9 @@ function RecommendInner() {
                   Finding games you&apos;ll love...
                 </span>
               </div>
-              {Array.from({ length: 5 }).map((_, i) => <RecommendCardSkeleton key={i} />)}
+              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 8 }).map((_, i) => <RecommendCardSkeleton key={i} />)}
+              </div>
             </div>
           ) : recError ? (
             <Card className="rounded-sm shadow-none border-destructive">
@@ -168,9 +158,11 @@ function RecommendInner() {
               <p className="text-xs text-muted-foreground">
                 Top {rankedGames.length} recommendations · re-ranked instantly on weight change
               </p>
-              {rankedGames.map((game, i) => (
-                <RecommendCard key={game.game_id} game={game} rank={i + 1} />
-              ))}
+              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                {rankedGames.map((game, i) => (
+                  <RecommendCard key={game.game_id} game={game} rank={i + 1} />
+                ))}
+              </div>
             </div>
           )}
         </main>
