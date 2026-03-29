@@ -102,22 +102,22 @@ export function SettingsPanel() {
                   <HelpCircle className="h-3 w-3" />
                 </TooltipTrigger>
                 <TooltipContent side="right" className="max-w-44 text-xs">
-                  Days until a game's recency score drops to 50%. Lower values favor newer releases more strongly.
+                  Years until a game's recency score drops to 50%. Lower values favor newer releases more strongly.
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
-          <span className="text-xs text-primary">{settings.halfLifeDays} days</span>
+          <span className="text-xs text-primary">{Math.round(settings.halfLifeDays / 365)} years</span>
         </div>
         <Slider
-          min={180}
-          max={3650}
-          step={90}
-          value={[settings.halfLifeDays]}
-          onValueChange={(v) => dispatch({ type: "SET_HALF_LIFE_DAYS", payload: (v as number[])[0] })}
+          min={1}
+          max={10}
+          step={1}
+          value={[Math.round(settings.halfLifeDays / 365)]}
+          onValueChange={(v) => dispatch({ type: "SET_HALF_LIFE_DAYS", payload: (v as number[])[0] * 365 })}
         />
         <div className="flex justify-between text-[12px] text-muted-foreground/60">
-          <span>180d</span><span>3650d</span>
+          <span>1yr</span><span>10yr</span>
         </div>
       </div>
 
