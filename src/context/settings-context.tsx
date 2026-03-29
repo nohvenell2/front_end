@@ -26,6 +26,7 @@ type Action =
       };
     }
   | { type: "SET_HALF_LIFE_DAYS"; payload: number }
+  | { type: "SET_SCORE_VIZ"; payload: "radar" | "bars" }
   | { type: "HYDRATE"; payload: RecommendationSettings }
   | { type: "RESET_DEFAULTS" };
 
@@ -51,6 +52,8 @@ function reducer(
       };
     case "SET_HALF_LIFE_DAYS":
       return { ...state, halfLifeDays: action.payload };
+    case "SET_SCORE_VIZ":
+      return { ...state, scoreViz: action.payload };
     case "HYDRATE":
       return action.payload;
     case "RESET_DEFAULTS":

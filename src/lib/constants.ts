@@ -33,4 +33,5 @@ export const DEFAULT_SETTINGS: RecommendationSettings = {
   halfLifeDays: parseInt(
     process.env.NEXT_PUBLIC_DEFAULT_HALF_LIFE_DAYS ?? "1825"
   ),
+  scoreViz: "radar" as const,
 };

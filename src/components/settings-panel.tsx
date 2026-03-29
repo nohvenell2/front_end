@@ -140,6 +140,28 @@ export function SettingsPanel({ onApply }: SettingsPanelProps) {
         </div>
       </div>
 
+      <Separator />
+
+      {/* Score Visualization */}
+      <div className="flex flex-col gap-3">
+        <Label className="text-xs text-muted-foreground font-semibold">Score Visualization</Label>
+        <div className="flex gap-1">
+          {(["radar", "bars"] as const).map((mode) => (
+            <button
+              key={mode}
+              className={`flex-1 text-xs py-1.5 rounded transition-colors capitalize ${
+                settings.scoreViz === mode
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              }`}
+              onClick={() => dispatch({ type: "SET_SCORE_VIZ", payload: mode })}
+            >
+              {mode === "radar" ? "Radar" : "Bars"}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Actions */}
       <div className="flex gap-2 pt-1">
         <Button

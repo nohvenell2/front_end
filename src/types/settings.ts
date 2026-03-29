@@ -12,4 +12,5 @@ export interface RecommendationSettings {
     minPositivePercent: number; // 0–100
   };
   halfLifeDays: number;
+  scoreViz: "radar" | "bars";
 }

@@ -19,10 +19,10 @@ const SCORE_AXES = [
 
 interface ScoreRadarProps {
   scores: RankedGame["scores"];
-  size?: number;
+  height?: number;
 }
 
-export function ScoreRadar({ scores, size = 140 }: ScoreRadarProps) {
+export function ScoreRadar({ scores, height = 220 }: ScoreRadarProps) {
   const data = SCORE_AXES.map(({ key, label }) => ({
     subject: label,
     value: Math.round(scores[key] * 100),
@@ -30,12 +30,18 @@ export function ScoreRadar({ scores, size = 140 }: ScoreRadarProps) {
   }));
 
   return (
-    <ResponsiveContainer width={size} height={size}>
-      <RadarChart cx="50%" cy="50%" outerRadius="65%" data={data}>
+    <ResponsiveContainer width="100%" height={height}>
+      <RadarChart
+        cx="50%"
+        cy="50%"
+        outerRadius="70%"
+        data={data}
+        margin={{ top: 4, right: 40, bottom: 4, left: 40 }}
+      >
         <PolarGrid stroke="#2a475e" strokeDasharray="3 3" />
         <PolarAngleAxis
           dataKey="subject"
-          tick={{ fill: "#8f98a0", fontSize: 10 }}
+          tick={{ fill: "#8f98a0", fontSize: 14 }}
         />
         <Radar
           dataKey="value"

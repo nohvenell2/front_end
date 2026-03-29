@@ -1,13 +1,22 @@
+"use client";
+
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScoreRadar } from "@/components/score-radar";
+import { ScoreProgressBars } from "@/components/score-progress-bars";
+import { useSettings } from "@/context/settings-context";
 import { cn } from "@/lib/utils";
 import type { RankedGame } from "@/types/recommend";
 
 interface RecommendCardProps {
   game: RankedGame;
   rank: number;
+}
+
+function formatReview(text: string): string {
+  return text.replace(/overwhelmingly positive/i, "Overwhelmingly +");
 }
 
 function reviewColor(percent: number): string {
@@ -19,6 +28,17 @@ function reviewColor(percent: number): string {
 
 export function RecommendCard({ game, rank }: RecommendCardProps) {
   const isTop = rank === 1;
+  const { settings } = useSettings();
+  const [localMode, setLocalMode] = useState<"radar" | "bars" | null>(null);
+  const chartMode = localMode ?? settings.scoreViz;
+  const [descExpanded, setDescExpanded] = useState(false);
+  const [descClamped, setDescClamped] = useState(false);
+  const descRef = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    const el = descRef.current;
+    if (el) setDescClamped(el.scrollHeight > el.clientHeight);
+  }, [game.description]);
 
   return (
     <Card
@@ -56,41 +76,43 @@ export function RecommendCard({ game, rank }: RecommendCardProps) {
               href={game.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm font-bold leading-snug hover:underline text-primary line-clamp-2"
+              className="text-base font-bold leading-snug hover:underline text-primary line-clamp-2"
             >
               {game.title}
             </a>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               {[game.developer, game.release_date_original].filter(Boolean).join(" · ")}
             </p>
             {game.all_reviews && (
-              <p className={cn("text-xs font-medium", reviewColor(game.total_review_positive_percent))}>
-                {game.all_reviews} ({game.total_review_positive_percent}% / {game.total_review_count.toLocaleString()} reviews)
+              <p className={cn("text-sm font-medium", reviewColor(game.total_review_positive_percent))}>
+                {formatReview(game.all_reviews)} ({game.total_review_positive_percent}% / {game.total_review_count.toLocaleString()} reviews)
               </p>
             )}
           </div>
-          <span className="text-3xl font-bold text-primary tabular-nums leading-none shrink-0">
-            {Math.round(game.finalScore * 100)}
-          </span>
+          <div className="flex flex-col items-center justify-center shrink-0 w-16 h-16 rounded-md bg-primary/20 border border-primary/30">
+            <span className="text-4xl font-bold text-primary tabular-nums leading-none">
+              {Math.round(game.finalScore * 100)}
+            </span>
+          </div>
         </div>
 
-        {/* Genres */}
-        {game.genres.length > 0 && (
+        {/* Tags */}
+        {game.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
-            {game.genres.slice(0, 3).map((g) => (
-              <Badge key={g} variant="secondary" className="text-[11px] px-1.5 py-0 rounded-sm h-4">
-                {g}
+            {game.tags.slice(0, 6).map((t) => (
+              <Badge key={t} className="text-xs px-1.5 py-0 rounded-sm h-5 bg-primary/15 text-primary border-transparent hover:bg-primary/15">
+                {t}
               </Badge>
             ))}
           </div>
         )}
 
-        {/* Tags */}
-        {game.tags.length > 0 && (
+        {/* Genres */}
+        {game.genres.length > 0 && (
           <div className="flex flex-wrap gap-1">
-            {game.tags.slice(0, 5).map((t) => (
-              <Badge key={t} variant="outline" className="text-[11px] px-1.5 py-0 rounded-sm h-4 text-muted-foreground border-muted-foreground/30">
-                {t}
+            {game.genres.slice(0, 4).map((g) => (
+              <Badge key={g} variant="outline" className="text-xs px-1.5 py-0 rounded-sm h-5 text-muted-foreground border-muted-foreground/30">
+                {g}
               </Badge>
             ))}
           </div>
@@ -98,14 +120,60 @@ export function RecommendCard({ game, rank }: RecommendCardProps) {
 
         {/* Description */}
         {game.description && (
-          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-            {game.description}
-          </p>
+          <div className="flex flex-col gap-0.5">
+            <p
+              ref={descRef}
+              className={cn("text-sm text-muted-foreground leading-relaxed", !descExpanded && "line-clamp-4")}
+            >
+              {game.description}
+            </p>
+            {(descClamped || descExpanded) && (
+              <button
+                className="self-start text-sm text-primary/70 hover:text-primary transition-colors"
+                onClick={() => setDescExpanded((v) => !v)}
+              >
+                {descExpanded ? "Show less" : "Show more"}
+              </button>
+            )}
+          </div>
         )}
 
-        {/* Radar chart */}
-        <div className="flex justify-center pt-1">
-          <ScoreRadar scores={game.scores} size={160} />
+        {/* Score visualization */}
+        <div className="space-y-2 mt-auto pt-3 border-t border-border">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-muted-foreground">Score Breakdown</span>
+            <div className="flex gap-1">
+              <button
+                className={cn(
+                  "text-sm px-2 py-0.5 rounded transition-colors",
+                  chartMode === "radar"
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-muted text-muted-foreground"
+                )}
+                onClick={() => setLocalMode("radar")}
+              >
+                Radar
+              </button>
+              <button
+                className={cn(
+                  "text-sm px-2 py-0.5 rounded transition-colors",
+                  chartMode === "bars"
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-muted text-muted-foreground"
+                )}
+                onClick={() => setLocalMode("bars")}
+              >
+                Bars
+              </button>
+            </div>
+          </div>
+          {chartMode === "radar" ? (
+            <div className="flex justify-center">
+              <ScoreRadar scores={game.scores} />
+            </div>
+          ) : (
+            <ScoreProgressBars scores={game.scores} />
+          )}
         </div>
       </CardContent>
     </Card>
@@ -131,8 +199,14 @@ export function RecommendCardSkeleton() {
           </div>
           <div className="h-8 w-10 rounded-sm bg-muted animate-pulse shrink-0" />
         </div>
-        <div className="flex justify-center pt-1">
-          <div className="w-[160px] h-[160px] rounded-full bg-muted animate-pulse" />
+        <div className="pt-3 border-t border-border space-y-2">
+          <div className="flex justify-between">
+            <div className="h-3 w-16 rounded-sm bg-muted animate-pulse" />
+            <div className="h-3 w-20 rounded-sm bg-muted animate-pulse" />
+          </div>
+          <div className="flex justify-center">
+            <div className="w-[160px] h-[160px] rounded-full bg-muted animate-pulse" />
+          </div>
         </div>
       </CardContent>
     </Card>
