@@ -12,8 +12,8 @@ const SCORE_LABELS = [
 ];
 
 function barColor(pct: number): string {
-  if (pct >= 80) return "bg-green-500 dark:bg-green-400";
-  if (pct >= 60) return "bg-yellow-400 dark:bg-yellow-300";
+  if (pct >= 80) return "bg-green-400";
+  if (pct >= 60) return "bg-yellow-400";
   return "bg-red-400";
 }
 
