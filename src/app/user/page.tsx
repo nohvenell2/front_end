@@ -383,7 +383,7 @@ export default function UserPage() {
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as "playtime" | "name")}
-              className="text-xs px-2 py-1.5 rounded-sm bg-background border border-border text-muted-foreground outline-none"
+              className="text-xs px-2 py-1.5 rounded-sm bg-background border border-border text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
             >
               <option value="playtime">By Playtime</option>
               <option value="name">By Name</option>
