@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
@@ -39,10 +40,17 @@ export default async function HomePage() {
             Sign in with Steam
           </a>
 
-          <p className="text-sm text-center text-muted-foreground/60">
+          <p className="text-base text-center text-muted-foreground">
             Sign in to get personalized game recommendations<br />
             based on your play history.
           </p>
+
+          <Link
+            href="/privacy"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Privacy Policy
+          </Link>
         </CardContent>
       </Card>
     </main>
