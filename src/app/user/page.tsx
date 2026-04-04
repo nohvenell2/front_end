@@ -11,15 +11,17 @@ import { enrichGames, formatPlaytime, steamHeaderUrl } from "@/lib/utils";
 import { MAX_GAME_SELECTION } from "@/lib/constants";
 import type { SteamGame, SteamGameEnriched } from "@/types/steam";
 
-import { Clock } from "lucide-react";
+import { Clock, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { NavBar } from "@/components/nav-bar";
 import { StatCard, StatCardSkeleton } from "@/components/stat-card";
 import { GameRow, GameRowSkeleton } from "@/components/game-row";
 import { GameCarousel } from "@/components/game-carousel";
+import { SettingsPanel } from "@/components/settings-panel";
 
 const ENRICH_LIMIT = 50;
 
@@ -167,6 +169,7 @@ export default function UserPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
 
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<"playtime" | "name">("playtime");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -306,7 +309,21 @@ export default function UserPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <NavBar session={session} title="🎮 Steam Recommender" />
+      <NavBar
+        session={session}
+        title="🎮 Steam Recommender"
+        rightmost={
+          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+            <SheetTrigger render={<Button variant="outline" size="sm" aria-label="Open settings"><Settings2 size={20} />Settings</Button>} />
+            <SheetContent side="right" className="overflow-y-auto bg-popover border-border p-0 sm:max-w-xs">
+              <SheetHeader className="px-4 pt-4 pb-2">
+                <SheetTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Settings</SheetTitle>
+              </SheetHeader>
+              <SettingsPanel />
+            </SheetContent>
+          </Sheet>
+        }
+      />
 
       <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col gap-6">
 
