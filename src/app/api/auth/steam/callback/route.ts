@@ -43,8 +43,15 @@ export async function GET(request: NextRequest) {
   const profileRes = await fetch(
     `${STEAM_API_BASE}/ISteamUser/GetPlayerSummaries/v0002/?key=${process.env.STEAM_API_KEY}&steamids=${steamid}`
   );
-  const profileData = await profileRes.json();
-  const player = profileData?.response?.players?.[0];
+
+  let player: { personaname?: string; avatarfull?: string } | undefined;
+  if (profileRes.ok) {
+    const contentType = profileRes.headers.get("content-type") ?? "";
+    if (contentType.includes("application/json")) {
+      const profileData = await profileRes.json();
+      player = profileData?.response?.players?.[0];
+    }
+  }
 
   const name: string = player?.personaname ?? steamid;
   const image: string = player?.avatarfull ?? "";
