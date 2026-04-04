@@ -75,11 +75,14 @@ function RecommendInner() {
     staleTime: 2 * 60 * 1000,
   });
 
+  const ownedAppids = useMemo(() => new Set(library?.map((g) => g.appid) ?? []), [library]);
+
   const rankedGames = useMemo<RankedGame[]>(() => {
     if (!recommendData?.data) return [];
     return rankGames(recommendData.data, settings.weights, settings.halfLifeDays)
+      .filter((g) => !ownedAppids.has(g.game_id))
       .slice(0, settings.count);
-  }, [recommendData, settings.weights, settings.halfLifeDays, settings.count]);
+  }, [recommendData, settings.weights, settings.halfLifeDays, settings.count, ownedAppids]);
 
   const isLoading = status === "loading" || recLoading || (selectedGames.length === 0 && !library);
 
